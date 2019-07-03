@@ -22,11 +22,11 @@ public class YamlTest {
     static {
         YamlConfig.WriteConfig writeConfig = CONFIG.writeConfig;
         //保存默认字段（无法保存null）
-        //writeConfig.setWriteDefaultValues(true);
+        writeConfig.setWriteDefaultValues(true);
         // 文件字段顺序与字段定义顺序相同
         writeConfig.setKeepBeanPropertyOrder(true);
         // 格式化输出
-        //writeConfig.setCanonical(true);
+        writeConfig.setCanonical(true);
         // 不换行
         writeConfig.setWrapColumn(Integer.MAX_VALUE);
         // 中文不转义
@@ -44,7 +44,7 @@ public class YamlTest {
         writer.write(people);
         writer.close();
 
-        YamlReader reader = new YamlReader(new FileReader("test/resource/yaml/generalObj.yaml"), CONFIG);
+        YamlReader reader = new YamlReader(new FileReader("test/resource/yaml/generalObj.yaml"));
         People read = (People) reader.read();
         Assert.assertEquals("yukms", read.getName());
         Assert.assertEquals(18, read.getAge());
