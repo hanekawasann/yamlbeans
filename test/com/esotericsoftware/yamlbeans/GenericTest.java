@@ -1,39 +1,25 @@
 package com.esotericsoftware.yamlbeans;
 
-import com.esotericsoftware.yamlbeans.YamlConfig.WriteClassName;
-import junit.framework.Assert;
-import junit.framework.TestCase;
-
 import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import com.esotericsoftware.yamlbeans.YamlConfig.WriteClassName;
+import junit.framework.Assert;
+import junit.framework.TestCase;
+
 public class GenericTest extends TestCase {
 
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
-    private static final String YAML
-            = "integerList: " + LINE_SEPARATOR
-            + "- 1" + LINE_SEPARATOR
-            + "- 100500" + LINE_SEPARATOR
-            + "- 10" + LINE_SEPARATOR
-            + "stringMap: " + LINE_SEPARATOR
-            + "   a: av" + LINE_SEPARATOR
-            + "   b: bv" + LINE_SEPARATOR
-            + "structList: " + LINE_SEPARATOR
-            + "-  i: 10" + LINE_SEPARATOR
-            + "   str: aaa" + LINE_SEPARATOR
-            + "-  i: 20" + LINE_SEPARATOR
-            + "   str: bbb" + LINE_SEPARATOR
-            + "structMap: " + LINE_SEPARATOR
-            + "   a: " + LINE_SEPARATOR
-            + "      i: 1" + LINE_SEPARATOR
-            + "      str: aa" + LINE_SEPARATOR
-            + "   b: " + LINE_SEPARATOR
-            + "      i: 2" + LINE_SEPARATOR
-            + "      str: ab" + LINE_SEPARATOR;
+    private static final String YAML = "integerList: " + LINE_SEPARATOR + "- 1" + LINE_SEPARATOR + "- 100500" +
+        LINE_SEPARATOR + "- 10" + LINE_SEPARATOR + "stringMap: " + LINE_SEPARATOR + "   a: av" + LINE_SEPARATOR +
+        "   b: bv" + LINE_SEPARATOR + "structList: " + LINE_SEPARATOR + "-  i: 10" + LINE_SEPARATOR + "   str: aaa" +
+        LINE_SEPARATOR + "-  i: 20" + LINE_SEPARATOR + "   str: bbb" + LINE_SEPARATOR + "structMap: " + LINE_SEPARATOR +
+        "   a: " + LINE_SEPARATOR + "      i: 1" + LINE_SEPARATOR + "      str: aa" + LINE_SEPARATOR + "   b: " +
+        LINE_SEPARATOR + "      i: 2" + LINE_SEPARATOR + "      str: ab" + LINE_SEPARATOR;
 
     public void testRead() throws YamlException {
         Test test = createTest();

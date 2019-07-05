@@ -21,6 +21,7 @@ public class YamlTest {
 
     static {
         YamlConfig.WriteConfig writeConfig = CONFIG.writeConfig;
+        //writeConfig.setAutoAnchor(false);
         //保存默认字段（无法保存null）
         writeConfig.setWriteDefaultValues(true);
         // 文件字段顺序与字段定义顺序相同
@@ -42,6 +43,7 @@ public class YamlTest {
         people.setAge(18);
         YamlWriter writer = new YamlWriter(new FileWriter("test/resource/yaml/generalObj.yaml"), CONFIG);
         writer.write(people);
+        writer.clearAnchors();
         writer.close();
 
         YamlReader reader = new YamlReader(new FileReader("test/resource/yaml/generalObj.yaml"));
@@ -109,21 +111,20 @@ public class YamlTest {
 
     @Test
     public void test_null_field() throws IOException {
-        NullObject object = new NullObject();
+        NullFieldObject object = new NullFieldObject();
         YamlWriter writer = new YamlWriter(new FileWriter("test/resource/yaml/nullField.yaml"), CONFIG);
         writer.write(object);
         writer.close();
 
         YamlReader reader = new YamlReader(new FileReader("test/resource/yaml/nullField.yaml"), CONFIG);
-        NullObject read = reader.read(NullObject.class);
+        NullFieldObject read = reader.read(NullFieldObject.class);
         Assert.assertNull(read.getObject());
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void test_null_obj() throws IOException {
-        NullObject object = null;
         YamlWriter writer = new YamlWriter(new FileWriter("test/resource/yaml/nullObj.yaml"), CONFIG);
-        writer.write(object);
+        writer.write(null);
         writer.close();
     }
 

@@ -1,11 +1,11 @@
 package com.esotericsoftware.yamlbeans;
 
-import junit.framework.TestCase;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+
+import junit.framework.TestCase;
 
 public class BooleanTest extends TestCase {
     public void testBooleanBean() throws Exception {
@@ -50,12 +50,12 @@ public class BooleanTest extends TestCase {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) { return true; }
+            if (o == null || getClass() != o.getClass()) { return false; }
 
             BeanWithBoolean that = (BeanWithBoolean) o;
 
-            if (bool != that.bool) return false;
+            if (bool != that.bool) { return false; }
             return !(boolObj != null ? !boolObj.equals(that.boolObj) : that.boolObj != null);
 
         }
@@ -69,10 +69,7 @@ public class BooleanTest extends TestCase {
 
         @Override
         public String toString() {
-            return "BeanWithBoolean{" +
-                    "bool=" + bool +
-                    ", boolObj=" + boolObj +
-                    '}';
+            return "BeanWithBoolean{" + "bool=" + bool + ", boolObj=" + boolObj + '}';
         }
     }
 }

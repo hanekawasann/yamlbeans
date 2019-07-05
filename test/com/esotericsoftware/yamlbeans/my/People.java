@@ -1,6 +1,7 @@
 package com.esotericsoftware.yamlbeans.my;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Data;
@@ -12,5 +13,5 @@ import lombok.Data;
 public class People implements Serializable {
     private String name;
     private int age;
-    private List<String> address;
+    private List<String> address = new ArrayList<>();
 }

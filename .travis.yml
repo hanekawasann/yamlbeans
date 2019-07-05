@@ -7,11 +7,11 @@ jdk:
 install: true
 script: "mvn --show-version --errors --batch-mode clean verify"
 cache:
-    directories:
+  directories:
     - $HOME/.m2
 branches:
-    except:
-        - gh-pages
+  except:
+    - gh-pages
 notifications:
-    email:
-        - dev@tchemit.fr
+  email:
+    - dev@tchemit.fr

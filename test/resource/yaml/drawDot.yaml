@@ -1,4 +1,4 @@
 - &1 !com.esotericsoftware.yamlbeans.my.Teacher
-   name: teacher
-   age: 18
+  name: teacher
+  age: 18
 - *1

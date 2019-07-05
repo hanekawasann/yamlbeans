@@ -7,21 +7,22 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 public class MergeTest {
 
-	@Test
-	public void testMerge() throws FileNotFoundException, YamlException {
-		InputStream input = new FileInputStream("test/test-merge.yml");
-		Reader reader = new InputStreamReader(input);
-		Map data = new YamlReader(reader).read(Map.class);
-		Map stuff = (Map)data.get("merged");
-		assertEquals("v1", stuff.get("v1"));
-		assertEquals("v2", stuff.get("v2"));
-		assertEquals("v3", stuff.get("v3"));
-		assertNull(stuff.get("<<"));
-	}
+    @Test
+    public void testMerge() throws FileNotFoundException, YamlException {
+        InputStream input = new FileInputStream("test/test-merge.yml");
+        Reader reader = new InputStreamReader(input);
+        Map data = new YamlReader(reader).read(Map.class);
+        Map stuff = (Map) data.get("merged");
+        assertEquals("v1", stuff.get("v1"));
+        assertEquals("v2", stuff.get("v2"));
+        assertEquals("v3", stuff.get("v3"));
+        assertNull(stuff.get("<<"));
+    }
 
 }

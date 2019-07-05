@@ -1,8 +1,5 @@
 package com.esotericsoftware.yamlbeans.tokenizer;
 
-import com.esotericsoftware.yamlbeans.tokenizer.Tokenizer.TokenizerException;
-import org.junit.Test;
-
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -11,6 +8,8 @@ import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import com.esotericsoftware.yamlbeans.tokenizer.Tokenizer.TokenizerException;
+import org.junit.Test;
 
 public class TokenizerTest {
 
