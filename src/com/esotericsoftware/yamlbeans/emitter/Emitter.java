@@ -302,8 +302,14 @@ public class Emitter {
     private void increaseIndent(boolean flow, boolean indentless) {
         indents.add(0, indent);
         if (indent == -1) {
-            if (flow) { indent = config.indentSize; } else { indent = 0; }
-        } else if (!indentless) { indent += config.indentSize; }
+            if (flow) {
+                indent = config.indentSize;
+            } else {
+                indent = 0;
+            }
+        } else if (!indentless) {
+            indent += config.indentSize;
+        }
     }
 
     private void expectDocumentStart(boolean first) throws IOException {
@@ -391,7 +397,9 @@ public class Emitter {
     }
 
     private void expectAlias() throws IOException {
-        if (((NodeEvent) event).anchor == null) { throw new EmitterException("Anchor is not specified for alias."); }
+        if (((NodeEvent) event).anchor == null) {
+            throw new EmitterException("Anchor is not specified for alias.");
+        }
         processAnchor("*");
         state = states.remove(0);
     }
@@ -473,7 +481,9 @@ public class Emitter {
             preparedAnchor = null;
             return;
         }
-        if (preparedAnchor == null) { preparedAnchor = prepareAnchor(ev.anchor); }
+        if (preparedAnchor == null) {
+            preparedAnchor = prepareAnchor(ev.anchor);
+        }
         if (preparedAnchor != null && !"".equals(preparedAnchor)) {
             writer.writeIndicator(indicator + preparedAnchor, true, false, false);
         }
@@ -485,7 +495,9 @@ public class Emitter {
         if (event.type == SCALAR) {
             ScalarEvent ev = (ScalarEvent) event;
             tag = ev.tag;
-            if (style == 0) { style = chooseScalarStyle(); }
+            if (style == 0) {
+                style = chooseScalarStyle();
+            }
             if ((!config.canonical || tag == null) &&
                 ((0 == style && ev.implicit[0]) || (0 != style && ev.implicit[1]))) {
                 preparedTag = null;
@@ -511,29 +523,53 @@ public class Emitter {
 
     private char chooseScalarStyle() {
         ScalarEvent ev = (ScalarEvent) event;
-        if (analysis == null) { analysis = ScalarAnalysis.analyze(ev.value, config.escapeUnicode); }
-        if (ev.style == '"' || config.canonical) { return '"'; }
-        if (ev.style == 0 && !(simpleKeyContext && (analysis.empty || analysis.multiline)) &&
-            (flowLevel != 0 && analysis.allowFlowPlain || flowLevel == 0 && analysis.allowBlockPlain)) { return 0; }
-        if ((ev.style == '|' || ev.style == '>') && flowLevel == 0 && analysis.allowBlock) { return '\''; }
+        if (analysis == null) {
+            analysis = ScalarAnalysis.analyze(ev.value, config.escapeUnicode);
+        }
+        if (ev.style == '"' || config.canonical) {
+            return '"';
+        }
+        if (ev.style == 0//
+            && !(simpleKeyContext && (analysis.empty || analysis.multiline))//
+            && (flowLevel != 0 && analysis.allowFlowPlain || flowLevel == 0 && analysis.allowBlockPlain)) {
+            return 0;
+        }
+        if ((ev.style == '|' || ev.style == '>') && flowLevel == 0 && analysis.allowBlock) {
+            return '\'';
+        }
         if ((ev.style == 0 || ev.style == '\'') && analysis.allowSingleQuoted &&
-            !(simpleKeyContext && analysis.multiline)) { return '\''; }
-        if (ev.style == 0 && analysis.multiline && flowLevel == 0 && analysis.allowBlock) { return '|'; }
+            !(simpleKeyContext && analysis.multiline)) {
+            return '\'';
+        }
+        if (ev.style == 0 && analysis.multiline && flowLevel == 0 && analysis.allowBlock) {
+            return '|';
+        }
         return '"';
     }
 
     private void processScalar() throws IOException {
         ScalarEvent ev = (ScalarEvent) event;
-        if (analysis == null) { analysis = ScalarAnalysis.analyze(ev.value, config.escapeUnicode); }
-        if (style == 0) { style = chooseScalarStyle(); }
+        if (analysis == null) {
+            analysis = ScalarAnalysis.analyze(ev.value, config.escapeUnicode);
+        }
+        if (style == 0) {
+            style = chooseScalarStyle();
+        }
         boolean split = !simpleKeyContext;
-        if (style == '"') {
-            writer.writeDoubleQuoted(analysis.scalar, split, indent, config.wrapColumn, config.escapeUnicode);
-        } else if (style == '\'') {
-            writer.writeSingleQuoted(analysis.scalar, split, indent, config.wrapColumn);
-        } else if (style == '>') { writer.writeFolded(analysis.scalar, indent, config.wrapColumn); } else if (style ==
-            '|') { writer.writeLiteral(analysis.scalar, indent); } else {
-            writer.writePlain(analysis.scalar, split, indent, config.wrapColumn);
+        String scalar = analysis.scalar;
+        // TODO: 2019/7/9 当对象为null时，那么什么都不写入
+        if (scalar != null) {
+            if (style == '"') {
+                writer.writeDoubleQuoted(scalar, split, indent, config.wrapColumn, config.escapeUnicode);
+            } else if (style == '\'') {
+                writer.writeSingleQuoted(scalar, split, indent, config.wrapColumn);
+            } else if (style == '>') {
+                writer.writeFolded(scalar, indent, config.wrapColumn);
+            } else if (style == '|') {
+                writer.writeLiteral(scalar, indent);
+            } else {
+                writer.writePlain(scalar, split, indent, config.wrapColumn);
+            }
         }
         analysis = null;
         style = 0;

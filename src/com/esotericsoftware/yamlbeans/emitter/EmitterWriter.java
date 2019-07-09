@@ -16,19 +16,28 @@
 
 package com.esotericsoftware.yamlbeans.emitter;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.esotericsoftware.yamlbeans.constants.Unicode;
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.aop.support.DefaultPointcutAdvisor;
+import org.springframework.aop.support.NameMatchMethodPointcut;
+import org.springframework.aop.support.StaticMethodMatcherPointcut;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * @author <a href="mailto:misc@n4te.com">Nathan Sweet</a>
  * @author <a href="mailto:ola.bini@ki.se">Ola Bini</a>
  */
 class EmitterWriter {
-    private static final Map<Integer, String> ESCAPE_REPLACEMENTS = new HashMap();
+    private static final Map<Integer, String> ESCAPE_REPLACEMENTS = new HashMap<>();
 
     static {
         ESCAPE_REPLACEMENTS.put((int) '\0', "0");
@@ -53,7 +62,36 @@ class EmitterWriter {
     boolean indentation = true;
 
     public EmitterWriter(Writer stream) {
-        this.writer = stream;
+        this.writer = (Writer) invoker(stream, new LogMethodInterceptor());
+    }
+
+    public static Object invoker(Object mockObj, MethodInterceptor interceptor) {
+        ProxyFactory factory = new ProxyFactory();
+        factory.setTarget(mockObj);
+        factory.addAdvisor(new DefaultPointcutAdvisor(getPointcut(), interceptor));
+        return factory.getProxy();
+    }
+
+    private static StaticMethodMatcherPointcut getPointcut() {
+        NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut();
+        pointcut.addMethodName("write");
+        return pointcut;
+    }
+
+    private static class LogMethodInterceptor implements MethodInterceptor {
+        @Override
+        public Object invoke(MethodInvocation methodInvocation) throws Throwable {
+            Object proceed = methodInvocation.proceed();
+            BufferedWriter writer = (BufferedWriter) methodInvocation.getThis();
+            Field field = ReflectionUtils.findField(BufferedWriter.class, "cb");
+            ReflectionUtils.makeAccessible(field);
+            char[] val = (char[]) ReflectionUtils.getField(field, writer);
+            String str = new String(val);
+            System.out.println("===========================================");
+            System.out.println(str);
+            System.out.println("===========================================");
+            return proceed;
+        }
     }
 
     public void writeStreamStart() {
@@ -74,6 +112,7 @@ class EmitterWriter {
         this.whitespace = whitespace;
         this.indentation = this.indentation && indentation;
         column += data.length();
+
         writer.write(data);
     }
 
@@ -113,6 +152,11 @@ class EmitterWriter {
         int start = 0;
         int ending = 0;
         String data;
+        // TODO: 2019/7/9
+        //if (text == null) {
+        //    writeIndicator("\"", false, false, false);
+        //    return;
+        //}
         while (ending <= text.length()) {
             int ch = 0;
             if (ending < text.length()) { ch = text.codePointAt(ending); }
@@ -157,7 +201,6 @@ class EmitterWriter {
             }
             ending += 1;
         }
-
         writeIndicator("\"", false, false, false);
     }
 
@@ -228,7 +271,7 @@ class EmitterWriter {
             char ceh = 0;
             if (ending < text.length()) { ceh = text.charAt(ending); }
             if (breaks) {
-                if (ceh == 0 || !('\n' == ceh || Unicode.NEXT_LINE == ceh)) {
+                if (!('\n' == ceh || Unicode.NEXT_LINE == ceh)) {
                     if (!leadingSpace && ceh != 0 && ceh != ' ' && text.charAt(start) == '\n') { writeLineBreak(null); }
                     leadingSpace = ceh == ' ';
                     data = text.substring(start, ending);
@@ -273,7 +316,7 @@ class EmitterWriter {
             char ceh = 0;
             if (ending < text.length()) { ceh = text.charAt(ending); }
             if (breaks) {
-                if (ceh == 0 || !('\n' == ceh || Unicode.NEXT_LINE == ceh)) {
+                if (!('\n' == ceh || Unicode.NEXT_LINE == ceh)) {
                     data = text.substring(start, ending);
                     for (int i = 0, j = data.length(); i < j; i++) {
                         char cha = data.charAt(i);
@@ -294,8 +337,10 @@ class EmitterWriter {
     }
 
     public void writePlain(String text, boolean split, int indent, int wrapColumn) throws IOException {
-        if (text == null || "".equals(text)) { return; }
-        String data = null;
+        if (text == null || "".equals(text)) {
+            return;
+        }
+        String data;
         if (!whitespace) {
             data = " ";
             column += data.length();
@@ -303,11 +348,15 @@ class EmitterWriter {
         }
         whitespace = false;
         indentation = false;
-        boolean spaces = false, breaks = false;
-        int start = 0, ending = 0;
+        boolean spaces = false;
+        boolean breaks = false;
+        int start = 0;
+        int ending = 0;
         while (ending <= text.length()) {
             char ceh = 0;
-            if (ending < text.length()) { ceh = text.charAt(ending); }
+            if (ending < text.length()) {
+                ceh = text.charAt(ending);
+            }
             if (spaces) {
                 if (ceh != ' ') {
                     if (start + 1 == ending && column > wrapColumn && split) {
@@ -323,11 +372,17 @@ class EmitterWriter {
                 }
             } else if (breaks) {
                 if (ceh != '\n' && ceh != Unicode.NEXT_LINE) {
-                    if (text.charAt(start) == '\n') { writeLineBreak(null); }
+                    if (text.charAt(start) == '\n') {
+                        writeLineBreak(null);
+                    }
                     data = text.substring(start, ending);
                     for (int i = 0, j = data.length(); i < j; i++) {
                         char cha = data.charAt(i);
-                        if ('\n' == cha) { writeLineBreak(null); } else { writeLineBreak("" + cha); }
+                        if ('\n' == cha) {
+                            writeLineBreak(null);
+                        } else {
+                            writeLineBreak("" + cha);
+                        }
                     }
                     writeIndent(indent);
                     whitespace = false;
@@ -349,7 +404,9 @@ class EmitterWriter {
     }
 
     public void writeLineBreak(String data) throws IOException {
-        if (data == null) { data = System.getProperty("line.separator"); }
+        if (data == null) {
+            data = System.getProperty("line.separator");
+        }
         whitespace = true;
         indentation = true;
         column = 0;
@@ -361,8 +418,10 @@ class EmitterWriter {
     }
 
     private String determineChomp(String text) {
-        String tail = text.substring(text.length() - 2, text.length() - 1);
-        while (tail.length() < 2) { tail = " " + tail; }
+        StringBuilder tail = new StringBuilder(text.substring(text.length() - 2, text.length() - 1));
+        while (tail.length() < 2) {
+            tail.insert(0, " ");
+        }
         char ceh = tail.charAt(tail.length() - 1);
         char ceh2 = tail.charAt(tail.length() - 2);
         return ceh == '\n' || ceh == Unicode.NEXT_LINE ? ceh2 == '\n' || ceh2 == Unicode.NEXT_LINE ? "+" : "" : "-";

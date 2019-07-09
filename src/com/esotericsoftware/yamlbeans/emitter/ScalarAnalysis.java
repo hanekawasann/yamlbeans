@@ -51,9 +51,13 @@ class ScalarAnalysis {
         this.allowBlock = allowBlock;
     }
 
-    static public ScalarAnalysis analyze(String scalar, boolean escapeUnicode) {
-        if (scalar == null) { return new ScalarAnalysis(scalar, true, false, false, true, true, true, false); }
-        if ("".equals(scalar)) { return new ScalarAnalysis(scalar, false, false, false, false, false, true, false); }
+    public static ScalarAnalysis analyze(String scalar, boolean escapeUnicode) {
+        if (scalar == null) {
+            return new ScalarAnalysis(scalar, true, false, false, true, true, true, false);
+        }
+        if ("".equals(scalar)) {
+            return new ScalarAnalysis(scalar, false, false, false, false, false, true, false);
+        }
         boolean blockIndicators = false;
         boolean flowIndicators = false;
         boolean lineBreaks = false;
@@ -134,14 +138,14 @@ class ScalarAnalysis {
                 if (leading) {
                     if (spaces && breaks) { mixedBreaksSpaces = true; } else if (spaces) {
                         leadingSpaces = true;
-                    } else if (breaks) {
+                    } else {
                         leadingBreaks = true;
                     }
                 } else if (mixed) { mixedBreaksSpaces = true; } else if (spaces && breaks) {
                     inlineBreaksSpaces = true;
                 } else if (spaces) {
                     // inlineSpaces = true;
-                } else if (breaks) {
+                } else {
                     inlineBreaks = true;
                 }
                 spaces = breaks = mixed = leading = false;
@@ -151,7 +155,7 @@ class ScalarAnalysis {
                 if (spaces && breaks) { mixedBreaksSpaces = true; } else if (spaces) {
                     trailingSpaces = true;
                     if (leading) { leadingSpaces = true; }
-                } else if (breaks) {
+                } else {
                     trailingBreaks = true;
                     if (leading) { leadingBreaks = true; }
                 }

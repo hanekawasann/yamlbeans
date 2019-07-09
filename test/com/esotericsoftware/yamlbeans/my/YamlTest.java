@@ -24,6 +24,8 @@ public class YamlTest {
         //writeConfig.setAutoAnchor(false);
         //保存默认字段（无法保存null）
         writeConfig.setWriteDefaultValues(true);
+        // 缩进
+        writeConfig.setIndentSize(3);
         // 文件字段顺序与字段定义顺序相同
         writeConfig.setKeepBeanPropertyOrder(true);
         // 格式化输出
@@ -34,19 +36,24 @@ public class YamlTest {
         writeConfig.setEscapeUnicode(false);
         // 总是输出类名
         writeConfig.setWriteClassname(YamlConfig.WriteClassName.ALWAYS);
+        // 输出开始标记
+        writeConfig.setExplicitFirstDocument(true);
+        // 输出结束标记
+        writeConfig.setExplicitEndDocument(true);
     }
 
     @Test
     public void test_general_obj() throws IOException {
+        String path = "test/resource/yaml/generalObj.yaml";
         People people = new People();
         people.setName("yukms");
         people.setAge(18);
-        YamlWriter writer = new YamlWriter(new FileWriter("test/resource/yaml/generalObj.yaml"), CONFIG);
+        YamlWriter writer = new YamlWriter(new FileWriter(path), CONFIG);
         writer.write(people);
         writer.clearAnchors();
         writer.close();
 
-        YamlReader reader = new YamlReader(new FileReader("test/resource/yaml/generalObj.yaml"));
+        YamlReader reader = new YamlReader(new FileReader(path));
         People read = (People) reader.read();
         Assert.assertEquals("yukms", read.getName());
         Assert.assertEquals(18, read.getAge());
@@ -54,12 +61,13 @@ public class YamlTest {
 
     @Test
     public void test_subclass_obj() throws IOException {
+        String path = "test/resource/yaml/subclassObj.yaml";
         List<People> people = getSubclassesOfPeople();
-        YamlWriter writer = new YamlWriter(new FileWriter("test/resource/yaml/subclassObj.yaml"), CONFIG);
+        YamlWriter writer = new YamlWriter(new FileWriter(path), CONFIG);
         writer.write(people);
         writer.close();
 
-        YamlReader reader = new YamlReader(new FileReader("test/resource/yaml/subclassObj.yaml"), CONFIG);
+        YamlReader reader = new YamlReader(new FileReader(path), CONFIG);
         List<People> read = (List<People>) reader.read();
         Assert.assertEquals(2, read.size());
         Teacher read_0 = (Teacher) read.get(0);
@@ -88,6 +96,7 @@ public class YamlTest {
 
     @Test
     public void test_draw_dot() throws IOException {
+        String path = "test/resource/yaml/drawDot.yaml";
         Teacher teacher = new Teacher();
         teacher.setName("teacher");
         teacher.setAge(18);
@@ -95,11 +104,11 @@ public class YamlTest {
         List<People> people = new ArrayList<>();
         people.add(teacher);
         people.add(teacher);
-        YamlWriter writer = new YamlWriter(new FileWriter("test/resource/yaml/drawDot.yaml"), CONFIG);
+        YamlWriter writer = new YamlWriter(new FileWriter(path), CONFIG);
         writer.write(people);
         writer.close();
 
-        YamlReader reader = new YamlReader(new FileReader("test/resource/yaml/drawDot.yaml"), CONFIG);
+        YamlReader reader = new YamlReader(new FileReader(path), CONFIG);
         List<People> read = (List<People>) reader.read();
         Assert.assertEquals(2, read.size());
         Teacher read_0 = (Teacher) read.get(0);
@@ -111,34 +120,66 @@ public class YamlTest {
 
     @Test
     public void test_null_field() throws IOException {
+        String path = "test/resource/yaml/nullField.yaml";
         NullFieldObject object = new NullFieldObject();
-        YamlWriter writer = new YamlWriter(new FileWriter("test/resource/yaml/nullField.yaml"), CONFIG);
+        YamlWriter writer = new YamlWriter(new FileWriter(path), CONFIG);
         writer.write(object);
         writer.close();
 
-        YamlReader reader = new YamlReader(new FileReader("test/resource/yaml/nullField.yaml"), CONFIG);
+        YamlReader reader = new YamlReader(new FileReader(path), CONFIG);
         NullFieldObject read = reader.read(NullFieldObject.class);
         Assert.assertNull(read.getObject());
     }
 
     @Test
     public void test_null_obj() throws IOException {
-        YamlWriter writer = new YamlWriter(new FileWriter("test/resource/yaml/nullObj.yaml"), CONFIG);
+        String path = "test/resource/yaml/nullObj.yaml";
+        YamlWriter writer = new YamlWriter(new FileWriter(path), CONFIG);
         writer.write(null);
         writer.close();
+
+        YamlReader reader = new YamlReader(new FileReader(path), CONFIG);
+        Object read = reader.read();
+        Assert.assertNull(read);
+    }
+
+    @Test
+    public void test_number() throws IOException {
+        String path = "test/resource/yaml/number.yaml";
+        YamlWriter writer = new YamlWriter(new FileWriter(path), CONFIG);
+        writer.write(123);
+        writer.close();
+
+        YamlReader reader = new YamlReader(new FileReader(path), CONFIG);
+        Integer read = reader.read(Integer.class);
+        Assert.assertEquals(new Integer(123), read);
+    }
+
+    @Test
+    public void test_string() throws IOException {
+        String path = "test/resource/yaml/string.yaml";
+        YamlWriter writer = new YamlWriter(new FileWriter(path), CONFIG);
+        writer.write("string");
+        writer.close();
+
+        YamlReader reader = new YamlReader(new FileReader(path), CONFIG);
+        String read = reader.read(String.class);
+        Assert.assertEquals("string", read);
     }
 
     @Test(expected = YamlException.class)
     public void test_exception() throws IOException {
-        YamlWriter writer = new YamlWriter(new FileWriter("test/resource/yaml/exception.yaml"));
+        String path = "test/resource/yaml/exception.yaml";
+        YamlWriter writer = new YamlWriter(new FileWriter(path));
         writer.write(new RuntimeException("exception"));
         writer.close();
     }
 
     @Test
     public void test_no_getter_object() throws IOException {
+        String path = "test/resource/yaml/noGetterObject.yaml";
         NoGetterObject object = new NoGetterObject("NoGetterObject");
-        YamlWriter writer = new YamlWriter(new FileWriter("test/resource/yaml/noGetterObject.yaml"));
+        YamlWriter writer = new YamlWriter(new FileWriter(path));
         writer.write(object);
         writer.close();
     }

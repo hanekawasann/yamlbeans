@@ -61,30 +61,32 @@ import com.esotericsoftware.yamlbeans.tokenizer.Tokenizer.TokenizerException;
  * @author <a href="mailto:ola.bini@ki.se">Ola Bini</a>
  */
 public class Parser {
-    Tokenizer tokenizer = null;
-    List<Production> parseStack = null;
-    final List<String> tags = new LinkedList();
-    final List<String> anchors = new LinkedList();
-    Map<String, String> tagHandles = new HashMap();
-    Version defaultVersion, documentVersion;
-    final Production[] table = new Production[46];
-    Event peekedEvent;
+    private Tokenizer tokenizer;
+    private List<Production> parseStack;
+    private final List<String> tags = new LinkedList<>();
+    private final List<String> anchors = new LinkedList<>();
+    private Map<String, String> tagHandles = new HashMap<>();
+    private Version defaultVersion;
+    private Version documentVersion;
+    private final Production[] table = new Production[46];
+    private Event peekedEvent;
 
     public Parser(Reader reader) {
         this(reader, new Version(1, 1));
     }
 
     public Parser(Reader reader, Version defaultVersion) {
-        if (reader == null) { throw new IllegalArgumentException("reader cannot be null."); }
-        if (defaultVersion == null) { throw new IllegalArgumentException("defaultVersion cannot be null."); }
-
+        if (reader == null) {
+            throw new IllegalArgumentException("reader cannot be null.");
+        }
+        if (defaultVersion == null) {
+            throw new IllegalArgumentException("defaultVersion cannot be null.");
+        }
         tokenizer = new Tokenizer(reader);
-
         this.defaultVersion = defaultVersion;
-
         initProductionTable();
 
-        parseStack = new LinkedList();
+        parseStack = new LinkedList<>();
         parseStack.add(0, table[P_STREAM]);
     }
 
@@ -124,474 +126,374 @@ public class Parser {
     }
 
     private void initProductionTable() {
-        table[P_STREAM] = new Production() {
-            public Event produce() {
-                parseStack.add(0, table[P_STREAM_END]);
+        table[P_STREAM] = () -> {
+            parseStack.add(0, table[P_STREAM_END]);
+            parseStack.add(0, table[P_EXPLICIT_DOCUMENT]);
+            parseStack.add(0, table[P_IMPLICIT_DOCUMENT]);
+            parseStack.add(0, table[P_STREAM_START]);
+            return null;
+        };
+        table[P_STREAM_START] = () -> {
+            tokenizer.getNextToken();
+            return Event.STREAM_START;
+        };
+        table[P_STREAM_END] = () -> {
+            tokenizer.getNextToken();
+            return Event.STREAM_END;
+        };
+        table[P_IMPLICIT_DOCUMENT] = () -> {
+            TokenType type = tokenizer.peekNextTokenType();
+            if (!(type == DIRECTIVE || type == DOCUMENT_START || type == STREAM_END)) {
+                parseStack.add(0, table[P_DOCUMENT_END]);
+                parseStack.add(0, table[P_BLOCK_NODE]);
+                parseStack.add(0, table[P_DOCUMENT_START_IMPLICIT]);
+            }
+            return null;
+        };
+        table[P_EXPLICIT_DOCUMENT] = () -> {
+            if (tokenizer.peekNextTokenType() != STREAM_END) {
                 parseStack.add(0, table[P_EXPLICIT_DOCUMENT]);
-                parseStack.add(0, table[P_IMPLICIT_DOCUMENT]);
-                parseStack.add(0, table[P_STREAM_START]);
-                return null;
+                parseStack.add(0, table[P_DOCUMENT_END]);
+                parseStack.add(0, table[P_BLOCK_NODE]);
+                parseStack.add(0, table[P_DOCUMENT_START]);
             }
+            return null;
         };
-        table[P_STREAM_START] = new Production() {
-            public Event produce() {
+        table[P_DOCUMENT_START] = () -> {
+            Token token = tokenizer.peekNextToken();
+            DocumentStartEvent documentStartEvent = processDirectives(true);
+            if (tokenizer.peekNextTokenType() != DOCUMENT_START) {
+                throw new ParserException("Expected 'document start' but found: " + token.type);
+            }
+            tokenizer.getNextToken();
+            return documentStartEvent;
+        };
+        table[P_DOCUMENT_START_IMPLICIT] = () -> processDirectives(false);
+        table[P_DOCUMENT_END] = () -> {
+            boolean explicit = false;
+            while (tokenizer.peekNextTokenType() == DOCUMENT_END) {
                 tokenizer.getNextToken();
-                return Event.STREAM_START;
+                explicit = true;
             }
+            return explicit ? Event.DOCUMENT_END_TRUE : Event.DOCUMENT_END_FALSE;
         };
-        table[P_STREAM_END] = new Production() {
-            public Event produce() {
-                tokenizer.getNextToken();
-                return Event.STREAM_END;
+        table[P_BLOCK_NODE] = () -> {
+            TokenType type = tokenizer.peekNextTokenType();
+            if (type == DIRECTIVE || type == DOCUMENT_START || type == DOCUMENT_END || type == STREAM_END) {
+                parseStack.add(0, table[P_EMPTY_SCALAR]);
+            } else if (type == ALIAS) { parseStack.add(0, table[P_ALIAS]); } else {
+                parseStack.add(0, table[P_PROPERTIES_END]);
+                parseStack.add(0, table[P_BLOCK_CONTENT]);
+                parseStack.add(0, table[P_PROPERTIES]);
             }
+            return null;
         };
-        table[P_IMPLICIT_DOCUMENT] = new Production() {
-            public Event produce() {
-                TokenType type = tokenizer.peekNextTokenType();
-                if (!(type == DIRECTIVE || type == DOCUMENT_START || type == STREAM_END)) {
-                    parseStack.add(0, table[P_DOCUMENT_END]);
-                    parseStack.add(0, table[P_BLOCK_NODE]);
-                    parseStack.add(0, table[P_DOCUMENT_START_IMPLICIT]);
-                }
-                return null;
+        table[P_BLOCK_CONTENT] = () -> {
+            TokenType type = tokenizer.peekNextTokenType();
+            if (type == BLOCK_SEQUENCE_START) { parseStack.add(0, table[P_BLOCK_SEQUENCE]); } else if (type ==
+                BLOCK_MAPPING_START) { parseStack.add(0, table[P_BLOCK_MAPPING]); } else if (type ==
+                FLOW_SEQUENCE_START) { parseStack.add(0, table[P_FLOW_SEQUENCE]); } else if (type ==
+                FLOW_MAPPING_START) { parseStack.add(0, table[P_FLOW_MAPPING]); } else if (type == SCALAR) {
+                parseStack.add(0, table[P_SCALAR]);
+            } else {
+                throw new ParserException("Expected a sequence, mapping, or scalar but found: " + type);
             }
+            return null;
         };
-        table[P_EXPLICIT_DOCUMENT] = new Production() {
-            public Event produce() {
-                if (tokenizer.peekNextTokenType() != STREAM_END) {
-                    parseStack.add(0, table[P_EXPLICIT_DOCUMENT]);
-                    parseStack.add(0, table[P_DOCUMENT_END]);
-                    parseStack.add(0, table[P_BLOCK_NODE]);
-                    parseStack.add(0, table[P_DOCUMENT_START]);
-                }
-                return null;
-            }
-        };
-        table[P_DOCUMENT_START] = new Production() {
-            public Event produce() {
-                Token token = tokenizer.peekNextToken();
-                DocumentStartEvent documentStartEvent = processDirectives(true);
-                if (tokenizer.peekNextTokenType() != DOCUMENT_START) {
-                    throw new ParserException("Expected 'document start' but found: " + token.type);
-                }
-                tokenizer.getNextToken();
-                return documentStartEvent;
-            }
-        };
-        table[P_DOCUMENT_START_IMPLICIT] = new Production() {
-            public Event produce() {
-                return processDirectives(false);
-            }
-        };
-        table[P_DOCUMENT_END] = new Production() {
-            public Event produce() {
-                boolean explicit = false;
-                while (tokenizer.peekNextTokenType() == DOCUMENT_END) {
-                    tokenizer.getNextToken();
-                    explicit = true;
-                }
-                return explicit ? Event.DOCUMENT_END_TRUE : Event.DOCUMENT_END_FALSE;
-            }
-        };
-        table[P_BLOCK_NODE] = new Production() {
-            public Event produce() {
-                TokenType type = tokenizer.peekNextTokenType();
-                if (type == DIRECTIVE || type == DOCUMENT_START || type == DOCUMENT_END || type == STREAM_END) {
-                    parseStack.add(0, table[P_EMPTY_SCALAR]);
-                } else if (type == ALIAS) { parseStack.add(0, table[P_ALIAS]); } else {
-                    parseStack.add(0, table[P_PROPERTIES_END]);
-                    parseStack.add(0, table[P_BLOCK_CONTENT]);
-                    parseStack.add(0, table[P_PROPERTIES]);
-                }
-                return null;
-            }
-        };
-        table[P_BLOCK_CONTENT] = new Production() {
-            public Event produce() {
-                TokenType type = tokenizer.peekNextTokenType();
-                if (type == BLOCK_SEQUENCE_START) { parseStack.add(0, table[P_BLOCK_SEQUENCE]); } else if (type ==
-                    BLOCK_MAPPING_START) { parseStack.add(0, table[P_BLOCK_MAPPING]); } else if (type ==
-                    FLOW_SEQUENCE_START) { parseStack.add(0, table[P_FLOW_SEQUENCE]); } else if (type ==
-                    FLOW_MAPPING_START) { parseStack.add(0, table[P_FLOW_MAPPING]); } else if (type == SCALAR) {
-                    parseStack.add(0, table[P_SCALAR]);
-                } else {
-                    throw new ParserException("Expected a sequence, mapping, or scalar but found: " + type);
-                }
-                return null;
-            }
-        };
-        table[P_PROPERTIES] = new Production() {
-            public Event produce() {
-                String anchor = null, tagHandle = null, tagSuffix = null;
-                if (tokenizer.peekNextTokenType() == ANCHOR) {
-                    anchor = ((AnchorToken) tokenizer.getNextToken()).getInstanceName();
-                    if (tokenizer.peekNextTokenType() == TAG) {
-                        TagToken tagToken = (TagToken) tokenizer.getNextToken();
-                        tagHandle = tagToken.getHandle();
-                        tagSuffix = tagToken.getSuffix();
-                    }
-                } else if (tokenizer.peekNextTokenType() == TAG) {
+        table[P_PROPERTIES] = () -> {
+            String anchor = null, tagHandle = null, tagSuffix = null;
+            if (tokenizer.peekNextTokenType() == ANCHOR) {
+                anchor = ((AnchorToken) tokenizer.getNextToken()).getInstanceName();
+                if (tokenizer.peekNextTokenType() == TAG) {
                     TagToken tagToken = (TagToken) tokenizer.getNextToken();
                     tagHandle = tagToken.getHandle();
                     tagSuffix = tagToken.getSuffix();
-                    if (tokenizer.peekNextTokenType() == ANCHOR) {
-                        anchor = ((AnchorToken) tokenizer.getNextToken()).getInstanceName();
-                    }
                 }
-                String tag = null;
-                if (tagHandle != null && !tagHandle.equals("!")) {
-                    if (!tagHandles.containsKey(tagHandle)) {
-                        throw new ParserException("Undefined tag handle: " + tagHandle);
-                    }
-                    tag = tagHandles.get(tagHandle) + tagSuffix;
-                } else { tag = tagSuffix; }
-                anchors.add(0, anchor);
-                tags.add(0, tag);
-                return null;
+            } else if (tokenizer.peekNextTokenType() == TAG) {
+                TagToken tagToken = (TagToken) tokenizer.getNextToken();
+                tagHandle = tagToken.getHandle();
+                tagSuffix = tagToken.getSuffix();
+                if (tokenizer.peekNextTokenType() == ANCHOR) {
+                    anchor = ((AnchorToken) tokenizer.getNextToken()).getInstanceName();
+                }
             }
+            String tag = null;
+            if (tagHandle != null && !tagHandle.equals("!")) {
+                if (!tagHandles.containsKey(tagHandle)) {
+                    throw new ParserException("Undefined tag handle: " + tagHandle);
+                }
+                tag = tagHandles.get(tagHandle) + tagSuffix;
+            } else { tag = tagSuffix; }
+            anchors.add(0, anchor);
+            tags.add(0, tag);
+            return null;
         };
-        table[P_PROPERTIES_END] = new Production() {
-            public Event produce() {
-                anchors.remove(0);
-                tags.remove(0);
-                return null;
+        table[P_PROPERTIES_END] = () -> {
+            anchors.remove(0);
+            tags.remove(0);
+            return null;
+        };
+        table[P_FLOW_CONTENT] = () -> {
+            TokenType type = tokenizer.peekNextTokenType();
+            if (type == FLOW_SEQUENCE_START) { parseStack.add(0, table[P_FLOW_SEQUENCE]); } else if (type ==
+                FLOW_MAPPING_START) { parseStack.add(0, table[P_FLOW_MAPPING]); } else if (type == SCALAR) {
+                parseStack.add(0, table[P_SCALAR]);
+            } else {
+                throw new ParserException("Expected a sequence, mapping, or scalar but found: " + type);
             }
+            return null;
         };
-        table[P_FLOW_CONTENT] = new Production() {
-            public Event produce() {
+        table[P_BLOCK_SEQUENCE] = () -> {
+            parseStack.add(0, table[P_BLOCK_SEQUENCE_END]);
+            parseStack.add(0, table[P_BLOCK_SEQUENCE_ENTRY]);
+            parseStack.add(0, table[P_BLOCK_SEQUENCE_START]);
+            return null;
+        };
+        table[P_BLOCK_MAPPING] = () -> {
+            parseStack.add(0, table[P_BLOCK_MAPPING_END]);
+            parseStack.add(0, table[P_BLOCK_MAPPING_ENTRY]);
+            parseStack.add(0, table[P_BLOCK_MAPPING_START]);
+            return null;
+        };
+        table[P_FLOW_SEQUENCE] = () -> {
+            parseStack.add(0, table[P_FLOW_SEQUENCE_END]);
+            parseStack.add(0, table[P_FLOW_SEQUENCE_ENTRY]);
+            parseStack.add(0, table[P_FLOW_SEQUENCE_START]);
+            return null;
+        };
+        table[P_FLOW_MAPPING] = () -> {
+            parseStack.add(0, table[P_FLOW_MAPPING_END]);
+            parseStack.add(0, table[P_FLOW_MAPPING_ENTRY]);
+            parseStack.add(0, table[P_FLOW_MAPPING_START]);
+            return null;
+        };
+        table[P_SCALAR] = () -> {
+            ScalarToken token = (ScalarToken) tokenizer.getNextToken();
+            boolean[] implicit = null;
+            if (token.getPlain() && tags.get(0) == null || "!".equals(tags.get(0))) {
+                implicit = new boolean[] { true, false };
+            } else if (tags.get(0) == null) { implicit = new boolean[] { false, true }; } else {
+                implicit = new boolean[] { false, false };
+            }
+            return new ScalarEvent(anchors.get(0), tags.get(0), implicit, token.getValue(), token.getStyle());
+        };
+        table[P_BLOCK_SEQUENCE_ENTRY] = () -> {
+            if (tokenizer.peekNextTokenType() == BLOCK_ENTRY) {
+                tokenizer.getNextToken();
                 TokenType type = tokenizer.peekNextTokenType();
-                if (type == FLOW_SEQUENCE_START) { parseStack.add(0, table[P_FLOW_SEQUENCE]); } else if (type ==
-                    FLOW_MAPPING_START) { parseStack.add(0, table[P_FLOW_MAPPING]); } else if (type == SCALAR) {
-                    parseStack.add(0, table[P_SCALAR]);
+                if (type == BLOCK_ENTRY || type == BLOCK_END) {
+                    parseStack.add(0, table[P_BLOCK_SEQUENCE_ENTRY]);
+                    parseStack.add(0, table[P_EMPTY_SCALAR]);
                 } else {
-                    throw new ParserException("Expected a sequence, mapping, or scalar but found: " + type);
+                    parseStack.add(0, table[P_BLOCK_SEQUENCE_ENTRY]);
+                    parseStack.add(0, table[P_BLOCK_NODE]);
                 }
-                return null;
             }
+            return null;
         };
-        table[P_BLOCK_SEQUENCE] = new Production() {
-            public Event produce() {
-                parseStack.add(0, table[P_BLOCK_SEQUENCE_END]);
-                parseStack.add(0, table[P_BLOCK_SEQUENCE_ENTRY]);
-                parseStack.add(0, table[P_BLOCK_SEQUENCE_START]);
-                return null;
-            }
-        };
-        table[P_BLOCK_MAPPING] = new Production() {
-            public Event produce() {
-                parseStack.add(0, table[P_BLOCK_MAPPING_END]);
-                parseStack.add(0, table[P_BLOCK_MAPPING_ENTRY]);
-                parseStack.add(0, table[P_BLOCK_MAPPING_START]);
-                return null;
-            }
-        };
-        table[P_FLOW_SEQUENCE] = new Production() {
-            public Event produce() {
-                parseStack.add(0, table[P_FLOW_SEQUENCE_END]);
-                parseStack.add(0, table[P_FLOW_SEQUENCE_ENTRY]);
-                parseStack.add(0, table[P_FLOW_SEQUENCE_START]);
-                return null;
-            }
-        };
-        table[P_FLOW_MAPPING] = new Production() {
-            public Event produce() {
-                parseStack.add(0, table[P_FLOW_MAPPING_END]);
-                parseStack.add(0, table[P_FLOW_MAPPING_ENTRY]);
-                parseStack.add(0, table[P_FLOW_MAPPING_START]);
-                return null;
-            }
-        };
-        table[P_SCALAR] = new Production() {
-            public Event produce() {
-                ScalarToken token = (ScalarToken) tokenizer.getNextToken();
-                boolean[] implicit = null;
-                if (token.getPlain() && tags.get(0) == null || "!".equals(tags.get(0))) {
-                    implicit = new boolean[] { true, false };
-                } else if (tags.get(0) == null) { implicit = new boolean[] { false, true }; } else {
-                    implicit = new boolean[] { false, false };
-                }
-                return new ScalarEvent(anchors.get(0), tags.get(0), implicit, token.getValue(), token.getStyle());
-            }
-        };
-        table[P_BLOCK_SEQUENCE_ENTRY] = new Production() {
-            public Event produce() {
-                if (tokenizer.peekNextTokenType() == BLOCK_ENTRY) {
-                    tokenizer.getNextToken();
-                    TokenType type = tokenizer.peekNextTokenType();
-                    if (type == BLOCK_ENTRY || type == BLOCK_END) {
-                        parseStack.add(0, table[P_BLOCK_SEQUENCE_ENTRY]);
-                        parseStack.add(0, table[P_EMPTY_SCALAR]);
-                    } else {
-                        parseStack.add(0, table[P_BLOCK_SEQUENCE_ENTRY]);
-                        parseStack.add(0, table[P_BLOCK_NODE]);
-                    }
-                }
-                return null;
-            }
-        };
-        table[P_BLOCK_MAPPING_ENTRY] = new Production() {
-            public Event produce() {
-                TokenType type = tokenizer.peekNextTokenType();
-                if (type == KEY) {
-                    tokenizer.getNextToken();
-                    type = tokenizer.peekNextTokenType();
-                    if (type == KEY || type == VALUE || type == BLOCK_END) {
-                        parseStack.add(0, table[P_BLOCK_MAPPING_ENTRY]);
-                        parseStack.add(0, table[P_BLOCK_MAPPING_ENTRY_VALUE]);
-                        parseStack.add(0, table[P_EMPTY_SCALAR]);
-                    } else {
-                        parseStack.add(0, table[P_BLOCK_MAPPING_ENTRY]);
-                        parseStack.add(0, table[P_BLOCK_MAPPING_ENTRY_VALUE]);
-                        parseStack.add(0, table[P_BLOCK_NODE_OR_INDENTLESS_SEQUENCE]);
-                        parseStack.add(0, table[P_PROPERTIES]);
-                    }
-                } else if (type == VALUE) {
+        table[P_BLOCK_MAPPING_ENTRY] = () -> {
+            TokenType type = tokenizer.peekNextTokenType();
+            if (type == KEY) {
+                tokenizer.getNextToken();
+                type = tokenizer.peekNextTokenType();
+                if (type == KEY || type == VALUE || type == BLOCK_END) {
                     parseStack.add(0, table[P_BLOCK_MAPPING_ENTRY]);
                     parseStack.add(0, table[P_BLOCK_MAPPING_ENTRY_VALUE]);
                     parseStack.add(0, table[P_EMPTY_SCALAR]);
-                }
-                return null;
-            }
-        };
-        table[P_BLOCK_MAPPING_ENTRY_VALUE] = new Production() {
-            public Event produce() {
-                TokenType type = tokenizer.peekNextTokenType();
-                if (type == VALUE) {
-                    tokenizer.getNextToken();
-                    type = tokenizer.peekNextTokenType();
-                    if (type == KEY || type == VALUE || type == BLOCK_END) {
-                        parseStack.add(0, table[P_EMPTY_SCALAR]);
-                    } else {
-                        parseStack.add(0, table[P_BLOCK_NODE_OR_INDENTLESS_SEQUENCE]);
-                        parseStack.add(0, table[P_PROPERTIES]);
-                    }
-                } else if (type == KEY) { parseStack.add(0, table[P_EMPTY_SCALAR]); }
-                return null;
-            }
-        };
-        table[P_BLOCK_NODE_OR_INDENTLESS_SEQUENCE] = new Production() {
-            public Event produce() {
-                TokenType type = tokenizer.peekNextTokenType();
-                if (type == ALIAS) { parseStack.add(0, table[P_ALIAS]); } else if (type == BLOCK_ENTRY) {
-                    parseStack.add(0, table[P_INDENTLESS_BLOCK_SEQUENCE]);
                 } else {
-                    parseStack.add(0, table[P_BLOCK_CONTENT]);
-                }
-                return null;
-            }
-        };
-        table[P_BLOCK_SEQUENCE_START] = new Production() {
-            public Event produce() {
-                boolean implicit = tags.get(0) == null || tags.get(0).equals("!");
-                tokenizer.getNextToken();
-                return new SequenceStartEvent(anchors.get(0), tags.get(0), implicit, false);
-            }
-        };
-        table[P_BLOCK_SEQUENCE_END] = new Production() {
-            public Event produce() {
-                if (tokenizer.peekNextTokenType() != BLOCK_END) {
-                    throw new ParserException("Expected a 'block end' but found: " + tokenizer.peekNextTokenType());
-                }
-                tokenizer.getNextToken();
-                return Event.SEQUENCE_END;
-            }
-        };
-        table[P_BLOCK_MAPPING_START] = new Production() {
-            public Event produce() {
-                boolean implicit = tags.get(0) == null || tags.get(0).equals("!");
-                tokenizer.getNextToken();
-                return new MappingStartEvent(anchors.get(0), tags.get(0), implicit, false);
-            }
-        };
-        table[P_BLOCK_MAPPING_END] = new Production() {
-            public Event produce() {
-                if (tokenizer.peekNextTokenType() != BLOCK_END) {
-                    throw new ParserException("Expected a 'block end' but found: " + tokenizer.peekNextTokenType());
-                }
-                tokenizer.getNextToken();
-                return Event.MAPPING_END;
-            }
-        };
-        table[P_INDENTLESS_BLOCK_SEQUENCE] = new Production() {
-            public Event produce() {
-                parseStack.add(0, table[P_BLOCK_INDENTLESS_SEQUENCE_END]);
-                parseStack.add(0, table[P_INDENTLESS_BLOCK_SEQUENCE_ENTRY]);
-                parseStack.add(0, table[P_BLOCK_INDENTLESS_SEQUENCE_START]);
-                return null;
-            }
-        };
-        table[P_BLOCK_INDENTLESS_SEQUENCE_START] = new Production() {
-            public Event produce() {
-                boolean implicit = tags.get(0) == null || tags.get(0).equals("!");
-                return new SequenceStartEvent(anchors.get(0), tags.get(0), implicit, false);
-            }
-        };
-        table[P_INDENTLESS_BLOCK_SEQUENCE_ENTRY] = new Production() {
-            public Event produce() {
-                if (tokenizer.peekNextTokenType() == BLOCK_ENTRY) {
-                    tokenizer.getNextToken();
-                    TokenType type = tokenizer.peekNextTokenType();
-                    if (type == BLOCK_ENTRY || type == KEY || type == VALUE || type == BLOCK_END) {
-                        parseStack.add(0, table[P_INDENTLESS_BLOCK_SEQUENCE_ENTRY]);
-                        parseStack.add(0, table[P_EMPTY_SCALAR]);
-                    } else {
-                        parseStack.add(0, table[P_INDENTLESS_BLOCK_SEQUENCE_ENTRY]);
-                        parseStack.add(0, table[P_BLOCK_NODE]);
-                    }
-                }
-                return null;
-            }
-        };
-        table[P_BLOCK_INDENTLESS_SEQUENCE_END] = new Production() {
-            public Event produce() {
-                return Event.SEQUENCE_END;
-            }
-        };
-        table[P_FLOW_SEQUENCE_START] = new Production() {
-            public Event produce() {
-                boolean implicit = tags.get(0) == null || tags.get(0).equals("!");
-                tokenizer.getNextToken();
-                return new SequenceStartEvent(anchors.get(0), tags.get(0), implicit, true);
-            }
-        };
-        table[P_FLOW_SEQUENCE_ENTRY] = new Production() {
-            public Event produce() {
-                if (tokenizer.peekNextTokenType() != FLOW_SEQUENCE_END) {
-                    if (tokenizer.peekNextTokenType() == KEY) {
-                        parseStack.add(0, table[P_FLOW_SEQUENCE_ENTRY]);
-                        parseStack.add(0, table[P_FLOW_ENTRY_MARKER]);
-                        parseStack.add(0, table[P_FLOW_INTERNAL_MAPPING_END]);
-                        parseStack.add(0, table[P_FLOW_INTERNAL_VALUE]);
-                        parseStack.add(0, table[P_FLOW_INTERNAL_CONTENT]);
-                        parseStack.add(0, table[P_FLOW_INTERNAL_MAPPING_START]);
-                    } else {
-                        parseStack.add(0, table[P_FLOW_SEQUENCE_ENTRY]);
-                        parseStack.add(0, table[P_FLOW_NODE]);
-                        parseStack.add(0, table[P_FLOW_ENTRY_MARKER]);
-                    }
-                }
-                return null;
-            }
-        };
-        table[P_FLOW_SEQUENCE_END] = new Production() {
-            public Event produce() {
-                tokenizer.getNextToken();
-                return Event.SEQUENCE_END;
-            }
-        };
-        table[P_FLOW_MAPPING_START] = new Production() {
-            public Event produce() {
-                boolean implicit = tags.get(0) == null || tags.get(0).equals("!");
-                tokenizer.getNextToken();
-                return new MappingStartEvent(anchors.get(0), tags.get(0), implicit, true);
-            }
-        };
-        table[P_FLOW_MAPPING_ENTRY] = new Production() {
-            public Event produce() {
-                if (tokenizer.peekNextTokenType() != FLOW_MAPPING_END) {
-                    if (tokenizer.peekNextTokenType() == KEY) {
-                        parseStack.add(0, table[P_FLOW_MAPPING_ENTRY]);
-                        parseStack.add(0, table[P_FLOW_ENTRY_MARKER]);
-                        parseStack.add(0, table[P_FLOW_MAPPING_INTERNAL_VALUE]);
-                        parseStack.add(0, table[P_FLOW_MAPPING_INTERNAL_CONTENT]);
-                    } else {
-                        parseStack.add(0, table[P_FLOW_MAPPING_ENTRY]);
-                        parseStack.add(0, table[P_FLOW_NODE]);
-                        parseStack.add(0, table[P_FLOW_ENTRY_MARKER]);
-                    }
-                }
-                return null;
-            }
-        };
-        table[P_FLOW_MAPPING_END] = new Production() {
-            public Event produce() {
-                tokenizer.getNextToken();
-                return Event.MAPPING_END;
-            }
-        };
-        table[P_FLOW_INTERNAL_MAPPING_START] = new Production() {
-            public Event produce() {
-                tokenizer.getNextToken();
-                return new MappingStartEvent(null, null, true, true);
-            }
-        };
-        table[P_FLOW_INTERNAL_CONTENT] = new Production() {
-            public Event produce() {
-                TokenType type = tokenizer.peekNextTokenType();
-                if (type == VALUE || type == FLOW_ENTRY || type == FLOW_SEQUENCE_END) {
-                    parseStack.add(0, table[P_EMPTY_SCALAR]);
-                } else { parseStack.add(0, table[P_FLOW_NODE]); }
-                return null;
-            }
-        };
-        table[P_FLOW_INTERNAL_VALUE] = new Production() {
-            public Event produce() {
-                if (tokenizer.peekNextTokenType() == VALUE) {
-                    tokenizer.getNextToken();
-                    if (tokenizer.peekNextTokenType() == FLOW_ENTRY ||
-                        tokenizer.peekNextTokenType() == FLOW_SEQUENCE_END) {
-                        parseStack.add(0, table[P_EMPTY_SCALAR]);
-                    } else { parseStack.add(0, table[P_FLOW_NODE]); }
-                } else { parseStack.add(0, table[P_EMPTY_SCALAR]); }
-                return null;
-            }
-        };
-        table[P_FLOW_INTERNAL_MAPPING_END] = new Production() {
-            public Event produce() {
-                return Event.MAPPING_END;
-            }
-        };
-        table[P_FLOW_ENTRY_MARKER] = new Production() {
-            public Event produce() {
-                if (tokenizer.peekNextTokenType() == FLOW_ENTRY) { tokenizer.getNextToken(); }
-                return null;
-            }
-        };
-        table[P_FLOW_NODE] = new Production() {
-            public Event produce() {
-                if (tokenizer.peekNextTokenType() == ALIAS) { parseStack.add(0, table[P_ALIAS]); } else {
-                    parseStack.add(0, table[P_PROPERTIES_END]);
-                    parseStack.add(0, table[P_FLOW_CONTENT]);
+                    parseStack.add(0, table[P_BLOCK_MAPPING_ENTRY]);
+                    parseStack.add(0, table[P_BLOCK_MAPPING_ENTRY_VALUE]);
+                    parseStack.add(0, table[P_BLOCK_NODE_OR_INDENTLESS_SEQUENCE]);
                     parseStack.add(0, table[P_PROPERTIES]);
                 }
-                return null;
+            } else if (type == VALUE) {
+                parseStack.add(0, table[P_BLOCK_MAPPING_ENTRY]);
+                parseStack.add(0, table[P_BLOCK_MAPPING_ENTRY_VALUE]);
+                parseStack.add(0, table[P_EMPTY_SCALAR]);
             }
+            return null;
         };
-        table[P_FLOW_MAPPING_INTERNAL_CONTENT] = new Production() {
-            public Event produce() {
-                TokenType type = tokenizer.peekNextTokenType();
-                if (type == VALUE || type == FLOW_ENTRY || type == FLOW_MAPPING_END) {
+        table[P_BLOCK_MAPPING_ENTRY_VALUE] = () -> {
+            TokenType type = tokenizer.peekNextTokenType();
+            if (type == VALUE) {
+                tokenizer.getNextToken();
+                type = tokenizer.peekNextTokenType();
+                if (type == KEY || type == VALUE || type == BLOCK_END) {
                     parseStack.add(0, table[P_EMPTY_SCALAR]);
                 } else {
-                    tokenizer.getNextToken();
-                    parseStack.add(0, table[P_FLOW_NODE]);
+                    parseStack.add(0, table[P_BLOCK_NODE_OR_INDENTLESS_SEQUENCE]);
+                    parseStack.add(0, table[P_PROPERTIES]);
                 }
-                return null;
-            }
+            } else if (type == KEY) { parseStack.add(0, table[P_EMPTY_SCALAR]); }
+            return null;
         };
-        table[P_FLOW_MAPPING_INTERNAL_VALUE] = new Production() {
-            public Event produce() {
-                if (tokenizer.peekNextTokenType() == VALUE) {
-                    tokenizer.getNextToken();
-                    if (tokenizer.peekNextTokenType() == FLOW_ENTRY ||
-                        tokenizer.peekNextTokenType() == FLOW_MAPPING_END) {
-                        parseStack.add(0, table[P_EMPTY_SCALAR]);
-                    } else { parseStack.add(0, table[P_FLOW_NODE]); }
-                } else { parseStack.add(0, table[P_EMPTY_SCALAR]); }
-                return null;
+        table[P_BLOCK_NODE_OR_INDENTLESS_SEQUENCE] = () -> {
+            TokenType type = tokenizer.peekNextTokenType();
+            if (type == ALIAS) { parseStack.add(0, table[P_ALIAS]); } else if (type == BLOCK_ENTRY) {
+                parseStack.add(0, table[P_INDENTLESS_BLOCK_SEQUENCE]);
+            } else {
+                parseStack.add(0, table[P_BLOCK_CONTENT]);
             }
+            return null;
         };
-        table[P_ALIAS] = new Production() {
-            public Event produce() {
-                AliasToken token = (AliasToken) tokenizer.getNextToken();
-                return new AliasEvent(token.getInstanceName());
+        table[P_BLOCK_SEQUENCE_START] = () -> {
+            boolean implicit = tags.get(0) == null || tags.get(0).equals("!");
+            tokenizer.getNextToken();
+            return new SequenceStartEvent(anchors.get(0), tags.get(0), implicit, false);
+        };
+        table[P_BLOCK_SEQUENCE_END] = () -> {
+            if (tokenizer.peekNextTokenType() != BLOCK_END) {
+                throw new ParserException("Expected a 'block end' but found: " + tokenizer.peekNextTokenType());
             }
+            tokenizer.getNextToken();
+            return Event.SEQUENCE_END;
         };
-        table[P_EMPTY_SCALAR] = new Production() {
-            public Event produce() {
-                return new ScalarEvent(null, null, new boolean[] { true, false }, null, (char) 0);
+        table[P_BLOCK_MAPPING_START] = () -> {
+            boolean implicit = tags.get(0) == null || tags.get(0).equals("!");
+            tokenizer.getNextToken();
+            return new MappingStartEvent(anchors.get(0), tags.get(0), implicit, false);
+        };
+        table[P_BLOCK_MAPPING_END] = () -> {
+            if (tokenizer.peekNextTokenType() != BLOCK_END) {
+                throw new ParserException("Expected a 'block end' but found: " + tokenizer.peekNextTokenType());
             }
+            tokenizer.getNextToken();
+            return Event.MAPPING_END;
         };
+        table[P_INDENTLESS_BLOCK_SEQUENCE] = () -> {
+            parseStack.add(0, table[P_BLOCK_INDENTLESS_SEQUENCE_END]);
+            parseStack.add(0, table[P_INDENTLESS_BLOCK_SEQUENCE_ENTRY]);
+            parseStack.add(0, table[P_BLOCK_INDENTLESS_SEQUENCE_START]);
+            return null;
+        };
+        table[P_BLOCK_INDENTLESS_SEQUENCE_START] = () -> {
+            boolean implicit = tags.get(0) == null || tags.get(0).equals("!");
+            return new SequenceStartEvent(anchors.get(0), tags.get(0), implicit, false);
+        };
+        table[P_INDENTLESS_BLOCK_SEQUENCE_ENTRY] = () -> {
+            if (tokenizer.peekNextTokenType() == BLOCK_ENTRY) {
+                tokenizer.getNextToken();
+                TokenType type = tokenizer.peekNextTokenType();
+                if (type == BLOCK_ENTRY || type == KEY || type == VALUE || type == BLOCK_END) {
+                    parseStack.add(0, table[P_INDENTLESS_BLOCK_SEQUENCE_ENTRY]);
+                    parseStack.add(0, table[P_EMPTY_SCALAR]);
+                } else {
+                    parseStack.add(0, table[P_INDENTLESS_BLOCK_SEQUENCE_ENTRY]);
+                    parseStack.add(0, table[P_BLOCK_NODE]);
+                }
+            }
+            return null;
+        };
+        table[P_BLOCK_INDENTLESS_SEQUENCE_END] = () -> Event.SEQUENCE_END;
+        table[P_FLOW_SEQUENCE_START] = () -> {
+            boolean implicit = tags.get(0) == null || tags.get(0).equals("!");
+            tokenizer.getNextToken();
+            return new SequenceStartEvent(anchors.get(0), tags.get(0), implicit, true);
+        };
+        table[P_FLOW_SEQUENCE_ENTRY] = () -> {
+            if (tokenizer.peekNextTokenType() != FLOW_SEQUENCE_END) {
+                if (tokenizer.peekNextTokenType() == KEY) {
+                    parseStack.add(0, table[P_FLOW_SEQUENCE_ENTRY]);
+                    parseStack.add(0, table[P_FLOW_ENTRY_MARKER]);
+                    parseStack.add(0, table[P_FLOW_INTERNAL_MAPPING_END]);
+                    parseStack.add(0, table[P_FLOW_INTERNAL_VALUE]);
+                    parseStack.add(0, table[P_FLOW_INTERNAL_CONTENT]);
+                    parseStack.add(0, table[P_FLOW_INTERNAL_MAPPING_START]);
+                } else {
+                    parseStack.add(0, table[P_FLOW_SEQUENCE_ENTRY]);
+                    parseStack.add(0, table[P_FLOW_NODE]);
+                    parseStack.add(0, table[P_FLOW_ENTRY_MARKER]);
+                }
+            }
+            return null;
+        };
+        table[P_FLOW_SEQUENCE_END] = () -> {
+            tokenizer.getNextToken();
+            return Event.SEQUENCE_END;
+        };
+        table[P_FLOW_MAPPING_START] = () -> {
+            boolean implicit = tags.get(0) == null || tags.get(0).equals("!");
+            tokenizer.getNextToken();
+            return new MappingStartEvent(anchors.get(0), tags.get(0), implicit, true);
+        };
+        table[P_FLOW_MAPPING_ENTRY] = () -> {
+            if (tokenizer.peekNextTokenType() != FLOW_MAPPING_END) {
+                if (tokenizer.peekNextTokenType() == KEY) {
+                    parseStack.add(0, table[P_FLOW_MAPPING_ENTRY]);
+                    parseStack.add(0, table[P_FLOW_ENTRY_MARKER]);
+                    parseStack.add(0, table[P_FLOW_MAPPING_INTERNAL_VALUE]);
+                    parseStack.add(0, table[P_FLOW_MAPPING_INTERNAL_CONTENT]);
+                } else {
+                    parseStack.add(0, table[P_FLOW_MAPPING_ENTRY]);
+                    parseStack.add(0, table[P_FLOW_NODE]);
+                    parseStack.add(0, table[P_FLOW_ENTRY_MARKER]);
+                }
+            }
+            return null;
+        };
+        table[P_FLOW_MAPPING_END] = () -> {
+            tokenizer.getNextToken();
+            return Event.MAPPING_END;
+        };
+        table[P_FLOW_INTERNAL_MAPPING_START] = () -> {
+            tokenizer.getNextToken();
+            return new MappingStartEvent(null, null, true, true);
+        };
+        table[P_FLOW_INTERNAL_CONTENT] = () -> {
+            TokenType type = tokenizer.peekNextTokenType();
+            if (type == VALUE || type == FLOW_ENTRY || type == FLOW_SEQUENCE_END) {
+                parseStack.add(0, table[P_EMPTY_SCALAR]);
+            } else { parseStack.add(0, table[P_FLOW_NODE]); }
+            return null;
+        };
+        table[P_FLOW_INTERNAL_VALUE] = () -> {
+            if (tokenizer.peekNextTokenType() == VALUE) {
+                tokenizer.getNextToken();
+                if (tokenizer.peekNextTokenType() == FLOW_ENTRY ||
+                    tokenizer.peekNextTokenType() == FLOW_SEQUENCE_END) {
+                    parseStack.add(0, table[P_EMPTY_SCALAR]);
+                } else { parseStack.add(0, table[P_FLOW_NODE]); }
+            } else { parseStack.add(0, table[P_EMPTY_SCALAR]); }
+            return null;
+        };
+        table[P_FLOW_INTERNAL_MAPPING_END] = () -> Event.MAPPING_END;
+        table[P_FLOW_ENTRY_MARKER] = () -> {
+            if (tokenizer.peekNextTokenType() == FLOW_ENTRY) { tokenizer.getNextToken(); }
+            return null;
+        };
+        table[P_FLOW_NODE] = () -> {
+            if (tokenizer.peekNextTokenType() == ALIAS) { parseStack.add(0, table[P_ALIAS]); } else {
+                parseStack.add(0, table[P_PROPERTIES_END]);
+                parseStack.add(0, table[P_FLOW_CONTENT]);
+                parseStack.add(0, table[P_PROPERTIES]);
+            }
+            return null;
+        };
+        table[P_FLOW_MAPPING_INTERNAL_CONTENT] = () -> {
+            TokenType type = tokenizer.peekNextTokenType();
+            if (type == VALUE || type == FLOW_ENTRY || type == FLOW_MAPPING_END) {
+                parseStack.add(0, table[P_EMPTY_SCALAR]);
+            } else {
+                tokenizer.getNextToken();
+                parseStack.add(0, table[P_FLOW_NODE]);
+            }
+            return null;
+        };
+        table[P_FLOW_MAPPING_INTERNAL_VALUE] = () -> {
+            if (tokenizer.peekNextTokenType() == VALUE) {
+                tokenizer.getNextToken();
+                if (tokenizer.peekNextTokenType() == FLOW_ENTRY ||
+                    tokenizer.peekNextTokenType() == FLOW_MAPPING_END) {
+                    parseStack.add(0, table[P_EMPTY_SCALAR]);
+                } else { parseStack.add(0, table[P_FLOW_NODE]); }
+            } else { parseStack.add(0, table[P_EMPTY_SCALAR]); }
+            return null;
+        };
+        table[P_ALIAS] = () -> {
+            AliasToken token = (AliasToken) tokenizer.getNextToken();
+            return new AliasEvent(token.getInstanceName());
+        };
+        table[P_EMPTY_SCALAR] = () -> new ScalarEvent(null, null, new boolean[] { true, false }, null, (char) 0);
     }
 
     DocumentStartEvent processDirectives(boolean explicit) {

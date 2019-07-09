@@ -1,4 +1,13 @@
-- &1 !com.esotericsoftware.yamlbeans.my.Teacher
-  name: teacher
-  age: 18
-- *1
+--- 
+[
+   &1 !com.esotericsoftware.yamlbeans.my.Teacher {
+      ? "name"
+      : !java.lang.String "teacher",
+      ? "age"
+      : !java.lang.Integer "18",
+      ? "address"
+      : [],
+   },
+   *1,
+]
+...

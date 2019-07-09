@@ -54,10 +54,10 @@ public class YamlWriter {
     private final YamlConfig config;
     private final Emitter emitter;
     private boolean started;
-
     private Map<Class, Object> defaultValuePrototypes = new IdentityHashMap<>();
-
+    /** 保存的对象 */
     private final List<Object> queuedObjects = new ArrayList<>();
+    /** 锚点 */
     private final Map<Object, Integer> referenceCount = new IdentityHashMap<>();
     private final Map<Object, String> anchoredObjects = new HashMap<>();
     private int nextAnchor = 1;
@@ -147,7 +147,8 @@ public class YamlWriter {
         if (object instanceof YamlElement) {
             ((YamlElement) object).emitEvent(emitter, config.writeConfig);
             return;
-        } else if (object == null) {
+        }
+        if (object == null) {
             emitter.emit(new ScalarEvent(null, null, new boolean[] { true, true }, null, (char) 0));
             return;
         }
@@ -332,7 +333,9 @@ public class YamlWriter {
     }
 
     private void countObjectReferences(Object object) throws YamlException {
-        if (object == null || Beans.isScalar(object.getClass())) { return; }
+        if (object == null || Beans.isScalar(object.getClass())) {
+            return;
+        }
 
         // Count every reference to the object, but follow its own references the first time it is encountered.
         Integer count = referenceCount.get(object);
