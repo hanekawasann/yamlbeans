@@ -444,10 +444,16 @@ public class Emitter {
     }
 
     private boolean checkEmptyDocument() {
-        if (event.type != DOCUMENT_START || events.isEmpty()) { return false; }
+        if (event.type != DOCUMENT_START || events.isEmpty()) {
+            return false;
+        }
         Event ev = events.get(0);
-        return ev.type == SCALAR && ((ScalarEvent) ev).anchor == null && ((ScalarEvent) ev).tag == null &&
-            ((ScalarEvent) ev).implicit != null && ((ScalarEvent) ev).value.equals("");
+        // TODO: 2019/7/9
+        return ev.type == SCALAR//
+            && ((ScalarEvent) ev).anchor == null//
+            && ((ScalarEvent) ev).tag == null//
+            && ((ScalarEvent) ev).implicit != null//
+            && ((ScalarEvent) ev).value.equals("");
     }
 
     private boolean checkSimpleKey() {

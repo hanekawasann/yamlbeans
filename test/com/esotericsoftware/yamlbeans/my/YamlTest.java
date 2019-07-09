@@ -21,25 +21,24 @@ public class YamlTest {
 
     static {
         YamlConfig.WriteConfig writeConfig = CONFIG.writeConfig;
-        //writeConfig.setAutoAnchor(false);
         //保存默认字段（无法保存null）
-        writeConfig.setWriteDefaultValues(true);
-        // 缩进
-        writeConfig.setIndentSize(3);
-        // 文件字段顺序与字段定义顺序相同
-        writeConfig.setKeepBeanPropertyOrder(true);
-        // 格式化输出
-        writeConfig.setCanonical(true);
-        // 不换行
-        writeConfig.setWrapColumn(Integer.MAX_VALUE);
-        // 中文不转义
-        writeConfig.setEscapeUnicode(false);
-        // 总是输出类名
-        writeConfig.setWriteClassname(YamlConfig.WriteClassName.ALWAYS);
-        // 输出开始标记
-        writeConfig.setExplicitFirstDocument(true);
-        // 输出结束标记
-        writeConfig.setExplicitEndDocument(true);
+        //writeConfig.setWriteDefaultValues(true);
+        //// 缩进
+        //writeConfig.setIndentSize(3);
+        //// 文件字段顺序与字段定义顺序相同
+        //writeConfig.setKeepBeanPropertyOrder(true);
+        //// 格式化输出
+        //writeConfig.setCanonical(true);
+        //// 不换行
+        //writeConfig.setWrapColumn(Integer.MAX_VALUE);
+        //// 中文不转义
+        //writeConfig.setEscapeUnicode(false);
+        //// 总是输出类名
+        //writeConfig.setWriteClassname(YamlConfig.WriteClassName.ALWAYS);
+        //// 输出开始标记
+        //writeConfig.setExplicitFirstDocument(true);
+        //// 输出结束标记
+        //writeConfig.setExplicitEndDocument(true);
     }
 
     @Test
