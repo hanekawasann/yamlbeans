@@ -1,0 +1,8 @@
+--- 
+!com.esotericsoftware.yamlbeansx.my.NullFieldObject {
+   ? "name"
+   : !java.lang.String,
+   ? "object"
+   : !java.lang.Object,
+}
+...

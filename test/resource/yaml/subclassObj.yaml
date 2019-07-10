@@ -1,22 +1,7 @@
---- 
-[
-   !com.esotericsoftware.yamlbeans.my.Teacher {
-      ? "name"
-      : !java.lang.String "teacher",
-      ? "age"
-      : !java.lang.Integer "18",
-      ? "address"
-      : [],
-   },
-   !com.esotericsoftware.yamlbeans.my.Student {
-      ? "name"
-      : !java.lang.String "student",
-      ? "age"
-      : !java.lang.Integer "18",
-      ? "address"
-      : [],
-      ? "teacherName"
-      : !java.lang.String "teacher",
-   },
-]
-...
+- !com.esotericsoftware.yamlbeansx.my.Teacher
+   name: teacher
+   age: 18
+- !com.esotericsoftware.yamlbeansx.my.Student
+   name: student
+   age: 18
+   teacherName: teacher

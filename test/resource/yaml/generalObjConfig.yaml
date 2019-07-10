@@ -1,0 +1,10 @@
+--- 
+!com.esotericsoftware.yamlbeansx.my.People {
+   ? "name"
+   : !java.lang.String "yukms",
+   ? "age"
+   : !java.lang.Integer "18",
+   ? "address"
+   : [],
+}
+...

@@ -1,6 +1,6 @@
 --- 
 [
-   &1 !com.esotericsoftware.yamlbeans.my.Teacher {
+   &1 !com.esotericsoftware.yamlbeansx.my.Teacher {
       ? "name"
       : !java.lang.String "teacher",
       ? "age"
