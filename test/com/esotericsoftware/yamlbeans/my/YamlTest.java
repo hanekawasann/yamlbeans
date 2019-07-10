@@ -127,6 +127,7 @@ public class YamlTest {
 
         YamlReader reader = new YamlReader(new FileReader(path), CONFIG);
         NullFieldObject read = reader.read(NullFieldObject.class);
+        Assert.assertNull(read.getName());
         Assert.assertNull(read.getObject());
     }
 
