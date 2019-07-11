@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -144,7 +145,9 @@ public class YamlxReader {
                 parser.getNextEvent();
                 anchor = ((AliasEvent) event).anchor;
                 Object value = anchors.get(anchor);
-                if (value == null) { throw new YamlReaderException("Unknown anchor: " + anchor); }
+                if (value == null) {
+                    throw new YamlReaderException("Unknown anchor: " + anchor);
+                }
                 return value;
             case MAPPING_START:
             case SEQUENCE_START:
@@ -370,7 +373,7 @@ public class YamlxReader {
                 if (anchor != null) {
                     anchors.put(anchor, object);
                 }
-                ArrayList keys = new ArrayList();
+                List<Object> keys = new ArrayList<>();
                 while (true) {
                     if (parser.peekNextEvent().type == MAPPING_END) {
                         parser.getNextEvent();
@@ -421,7 +424,9 @@ public class YamlxReader {
                             Property property = Beans
                                 .getProperty(type, (String) key, config.beanProperties, config.privateFields, config);
                             if (property == null) {
-                                if (config.readConfig.ignoreUnknownProperties) { continue; }
+                                if (config.readConfig.ignoreUnknownProperties) {
+                                    continue;
+                                }
                                 throw new YamlReaderException(
                                     "Unable to find property '" + key + "' on class: " + type.getName());
                             }
@@ -435,7 +440,9 @@ public class YamlxReader {
                             }
                             property.set(object, value);
                         } catch (Exception ex) {
-                            if (ex instanceof YamlReaderException) { throw (YamlReaderException) ex; }
+                            if (ex instanceof YamlReaderException) {
+                                throw (YamlReaderException) ex;
+                            }
                             throw new YamlReaderException(
                                 "Error setting property '" + key + "' on class: " + type.getName(), ex);
                         }
@@ -469,7 +476,9 @@ public class YamlxReader {
                 } else {
                     throw new YamlReaderException("A sequence is not a valid value for the type: " + type.getName());
                 }
-                if (!type.isArray() && anchor != null) { anchors.put(anchor, collection); }
+                if (!type.isArray() && anchor != null) {
+                    anchors.put(anchor, collection);
+                }
                 while (true) {
                     event = parser.peekNextEvent();
                     if (event.type == SEQUENCE_END) {
@@ -478,11 +487,17 @@ public class YamlxReader {
                     }
                     collection.add(readValue(elementType, null, null));
                 }
-                if (!type.isArray()) { return collection; }
+                if (!type.isArray()) {
+                    return collection;
+                }
                 Object array = Array.newInstance(elementType, collection.size());
                 int i = 0;
-                for (Object object : collection) { Array.set(array, i++, object); }
-                if (anchor != null) { anchors.put(anchor, array); }
+                for (Object object : collection) {
+                    Array.set(array, i++, object);
+                }
+                if (anchor != null) {
+                    anchors.put(anchor, array);
+                }
                 return array;
             }
             case SCALAR:

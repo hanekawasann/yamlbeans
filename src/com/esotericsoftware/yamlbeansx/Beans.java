@@ -47,12 +47,12 @@ class Beans {
     private Beans() {
     }
 
-    static public boolean isScalar(Class c) {
+    public static boolean isScalar(Class c) {
         return c.isPrimitive() || c == String.class || c == Integer.class || c == Boolean.class || c == Float.class ||
             c == Long.class || c == Double.class || c == Short.class || c == Byte.class || c == Character.class;
     }
 
-    static public DeferredConstruction getDeferredConstruction(Class type, YamlxConfig config) {
+    public static DeferredConstruction getDeferredConstruction(Class type, YamlxConfig config) {
         ConstructorParameters parameters = config.readConfig.constructorParameters.get(type);
         if (parameters != null) { return new DeferredConstruction(parameters.constructor, parameters.parameterNames); }
         try {
@@ -69,7 +69,7 @@ class Beans {
         return null;
     }
 
-    static public Object createObject(Class type, boolean privateConstructors) throws InvocationTargetException {
+    public static Object createObject(Class type, boolean privateConstructors) throws InvocationTargetException {
         // Use no-arg constructor.
         Constructor constructor = null;
         for (Constructor typeConstructor : type.getConstructors()) {
@@ -84,9 +84,7 @@ class Beans {
             try {
                 constructor = type.getDeclaredConstructor();
                 constructor.setAccessible(true);
-            } catch (SecurityException ignored) {
-            } catch (NoSuchMethodException ignored) {
-            }
+            } catch (SecurityException | NoSuchMethodException ignored) { }
         }
 
         // Otherwise try to use a common implementation.
@@ -116,7 +114,7 @@ class Beans {
         }
     }
 
-    static public Set<Property> getProperties(Class type, boolean beanProperties, boolean privateFields,
+    public static Set<Property> getProperties(Class type, boolean beanProperties, boolean privateFields,
         YamlxConfig config) {
         if (type == null) { throw new IllegalArgumentException("type cannot be null."); }
         Class[] noArgs = new Class[0], oneArg = new Class[1];
@@ -173,10 +171,14 @@ class Beans {
         return buffer.toString();
     }
 
-    static public Property getProperty(Class type, String name, boolean beanProperties, boolean privateFields,
+    public static Property getProperty(Class type, String name, boolean beanProperties, boolean privateFields,
         YamlxConfig config) {
-        if (type == null) { throw new IllegalArgumentException("type cannot be null."); }
-        if (name == null || name.length() == 0) { throw new IllegalArgumentException("name cannot be null or empty."); }
+        if (type == null) {
+            throw new IllegalArgumentException("type cannot be null.");
+        }
+        if (name == null || name.length() == 0) {
+            throw new IllegalArgumentException("name cannot be null or empty.");
+        }
         name = toJavaIdentifier(name);
 
         if (beanProperties) {
@@ -187,13 +189,11 @@ class Beans {
             Method getMethod = null;
             try {
                 getMethod = type.getMethod("get" + nameUpper);
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) { }
             if (getMethod == null) {
                 try {
                     getMethod = type.getMethod("is" + nameUpper);
-                } catch (Exception ignored) {
-                }
+                } catch (Exception ignored) { }
             }
             if (getMethod != null) {
                 Method setMethod = null;
@@ -208,34 +208,39 @@ class Beans {
         }
 
         for (Field field : getAllFields(type)) {
-            if (!field.getName().equals(name)) { continue; }
+            if (!field.getName().equals(name)) {
+                continue;
+            }
             int modifiers = field.getModifiers();
-            if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) { continue; }
-            if (!Modifier.isPublic(modifiers) && !privateFields) { continue; }
+            if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) {
+                continue;
+            }
+            if (!Modifier.isPublic(modifiers) && !privateFields) {
+                continue;
+            }
             try {
                 field.setAccessible(true);
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
             return new FieldProperty(field);
         }
         return null;
     }
 
     static private ArrayList<Field> getAllFields(Class type) {
-        ArrayList<Class> classes = new ArrayList();
+        ArrayList<Class> classes = new ArrayList<>();
         Class nextClass = type;
         while (nextClass != null && nextClass != Object.class) {
             classes.add(nextClass);
             nextClass = nextClass.getSuperclass();
         }
-        ArrayList<Field> allFields = new ArrayList();
+        ArrayList<Field> allFields = new ArrayList<>();
         for (int i = classes.size() - 1; i >= 0; i--) {
             Collections.addAll(allFields, classes.get(i).getDeclaredFields());
         }
         return allFields;
     }
 
-    static public class MethodProperty extends Property {
+    public static class MethodProperty extends Property {
         private final Method setMethod, getMethod;
 
         public MethodProperty(String name, Method setMethod, Method getMethod) {
@@ -278,7 +283,7 @@ class Beans {
         }
     }
 
-    static public abstract class Property implements Comparable<Property> {
+    public static abstract class Property implements Comparable<Property> {
         private final Class declaringClass;
         private final String name;
         private final Class type;

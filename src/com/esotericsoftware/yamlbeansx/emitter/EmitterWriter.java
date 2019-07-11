@@ -62,7 +62,9 @@ class EmitterWriter {
     boolean indentation = true;
 
     public EmitterWriter(Writer stream) {
-        this.writer = (Writer) invoker(stream, new LogMethodInterceptor());
+        // TODO: 2019/7/11 aop
+        //this.writer = (Writer) invoker(stream, new LogMethodInterceptor());
+        this.writer = stream;
     }
 
     public static Object invoker(Object mockObj, MethodInterceptor interceptor) {

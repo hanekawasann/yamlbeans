@@ -144,6 +144,20 @@ public class YamlTest {
     }
 
     @Test
+    public void test_null_field_config() throws IOException {
+        String path = "test/resource/yaml/nullFieldConfig.yaml";
+        NullFieldObject object = new NullFieldObject();
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        writer.write(object);
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
+        NullFieldObject read = (NullFieldObject) reader.read();
+        Assert.assertNull(read.getName());
+        Assert.assertNull(read.getObject());
+    }
+
+    @Test
     public void test_general_obj_config() throws IOException {
         String path = "test/resource/yaml/generalObjConfig.yaml";
         People people = new People();
@@ -170,20 +184,6 @@ public class YamlTest {
 
         YamlxReader reader = new YamlxReader(new FileReader(path));
         NullFieldObject read = reader.read(NullFieldObject.class);
-        Assert.assertNull(read.getName());
-        Assert.assertNull(read.getObject());
-    }
-
-    @Test
-    public void test_null_field_config() throws IOException {
-        String path = "test/resource/yaml/nullFieldConfig.yaml";
-        NullFieldObject object = new NullFieldObject();
-        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
-        writer.write(object);
-        writer.close();
-
-        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
-        NullFieldObject read = (NullFieldObject) reader.read();
         Assert.assertNull(read.getName());
         Assert.assertNull(read.getObject());
     }

@@ -16,9 +16,12 @@
 
 package com.esotericsoftware.yamlbeansx.parser;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,6 +56,13 @@ import com.esotericsoftware.yamlbeansx.tokenizer.Token;
 import com.esotericsoftware.yamlbeansx.tokenizer.TokenType;
 import com.esotericsoftware.yamlbeansx.tokenizer.Tokenizer;
 import com.esotericsoftware.yamlbeansx.tokenizer.Tokenizer.TokenizerException;
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.aop.support.DefaultPointcutAdvisor;
+import org.springframework.aop.support.NameMatchMethodPointcut;
+import org.springframework.aop.support.StaticMethodMatcherPointcut;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * Parses a stream of tokens into events.
@@ -88,6 +98,8 @@ public class Parser {
 
         parseStack = new LinkedList<>();
         parseStack.add(0, table[P_STREAM]);
+
+
     }
 
     public Event getNextEvent() throws ParserException, TokenizerException {
@@ -108,7 +120,9 @@ public class Parser {
     }
 
     public Event peekNextEvent() throws ParserException, TokenizerException {
-        if (peekedEvent != null) { return peekedEvent; }
+        if (peekedEvent != null) {
+            return peekedEvent;
+        }
         peekedEvent = getNextEvent();
         return peekedEvent;
     }
@@ -181,7 +195,9 @@ public class Parser {
             TokenType type = tokenizer.peekNextTokenType();
             if (type == DIRECTIVE || type == DOCUMENT_START || type == DOCUMENT_END || type == STREAM_END) {
                 parseStack.add(0, table[P_EMPTY_SCALAR]);
-            } else if (type == ALIAS) { parseStack.add(0, table[P_ALIAS]); } else {
+            } else if (type == ALIAS) {
+                parseStack.add(0, table[P_ALIAS]);
+            } else {
                 parseStack.add(0, table[P_PROPERTIES_END]);
                 parseStack.add(0, table[P_BLOCK_CONTENT]);
                 parseStack.add(0, table[P_PROPERTIES]);
@@ -190,10 +206,15 @@ public class Parser {
         };
         table[P_BLOCK_CONTENT] = () -> {
             TokenType type = tokenizer.peekNextTokenType();
-            if (type == BLOCK_SEQUENCE_START) { parseStack.add(0, table[P_BLOCK_SEQUENCE]); } else if (type ==
-                BLOCK_MAPPING_START) { parseStack.add(0, table[P_BLOCK_MAPPING]); } else if (type ==
-                FLOW_SEQUENCE_START) { parseStack.add(0, table[P_FLOW_SEQUENCE]); } else if (type ==
-                FLOW_MAPPING_START) { parseStack.add(0, table[P_FLOW_MAPPING]); } else if (type == SCALAR) {
+            if (type == BLOCK_SEQUENCE_START) {
+                parseStack.add(0, table[P_BLOCK_SEQUENCE]);
+            } else if (type == BLOCK_MAPPING_START) {
+                parseStack.add(0, table[P_BLOCK_MAPPING]);
+            } else if (type == FLOW_SEQUENCE_START) {
+                parseStack.add(0, table[P_FLOW_SEQUENCE]);
+            } else if (type == FLOW_MAPPING_START) {
+                parseStack.add(0, table[P_FLOW_MAPPING]);
+            } else if (type == SCALAR) {
                 parseStack.add(0, table[P_SCALAR]);
             } else {
                 throw new ParserException("Expected a sequence, mapping, or scalar but found: " + type);
@@ -217,7 +238,7 @@ public class Parser {
                     anchor = ((AnchorToken) tokenizer.getNextToken()).getInstanceName();
                 }
             }
-            String tag = null;
+            String tag;
             if (tagHandle != null && !tagHandle.equals("!")) {
                 if (!tagHandles.containsKey(tagHandle)) {
                     throw new ParserException("Undefined tag handle: " + tagHandle);
@@ -449,8 +470,7 @@ public class Parser {
         table[P_FLOW_INTERNAL_VALUE] = () -> {
             if (tokenizer.peekNextTokenType() == VALUE) {
                 tokenizer.getNextToken();
-                if (tokenizer.peekNextTokenType() == FLOW_ENTRY ||
-                    tokenizer.peekNextTokenType() == FLOW_SEQUENCE_END) {
+                if (tokenizer.peekNextTokenType() == FLOW_ENTRY || tokenizer.peekNextTokenType() == FLOW_SEQUENCE_END) {
                     parseStack.add(0, table[P_EMPTY_SCALAR]);
                 } else { parseStack.add(0, table[P_FLOW_NODE]); }
             } else { parseStack.add(0, table[P_EMPTY_SCALAR]); }
@@ -482,8 +502,7 @@ public class Parser {
         table[P_FLOW_MAPPING_INTERNAL_VALUE] = () -> {
             if (tokenizer.peekNextTokenType() == VALUE) {
                 tokenizer.getNextToken();
-                if (tokenizer.peekNextTokenType() == FLOW_ENTRY ||
-                    tokenizer.peekNextTokenType() == FLOW_MAPPING_END) {
+                if (tokenizer.peekNextTokenType() == FLOW_ENTRY || tokenizer.peekNextTokenType() == FLOW_MAPPING_END) {
                     parseStack.add(0, table[P_EMPTY_SCALAR]);
                 } else { parseStack.add(0, table[P_FLOW_NODE]); }
             } else { parseStack.add(0, table[P_EMPTY_SCALAR]); }
@@ -519,7 +538,7 @@ public class Parser {
         if (documentVersion != null) { version = documentVersion; } else { version = defaultVersion; }
 
         Map<String, String> tags = null;
-        if (!tagHandles.isEmpty()) { tags = new HashMap(tagHandles); }
+        if (!tagHandles.isEmpty()) { tags = new HashMap<>(tagHandles); }
         Map<String, String> baseTags = version.minor == 0 ? DEFAULT_TAGS_1_0 : DEFAULT_TAGS_1_1;
         for (String key : baseTags.keySet()) {
             if (!tagHandles.containsKey(key)) { tagHandles.put(key, baseTags.get(key)); }
@@ -527,8 +546,8 @@ public class Parser {
         return new DocumentStartEvent(explicit, version, tags);
     }
 
-    static interface Production {
-        public Event produce();
+    interface Production {
+        Event produce();
     }
 
     static private final int P_STREAM = 0;
@@ -578,8 +597,8 @@ public class Parser {
     static private final int P_ALIAS = 44;
     static private final int P_EMPTY_SCALAR = 45;
 
-    static private final Map<String, String> DEFAULT_TAGS_1_0 = new HashMap();
-    static private final Map<String, String> DEFAULT_TAGS_1_1 = new HashMap();
+    static private final Map<String, String> DEFAULT_TAGS_1_0 = new HashMap<>();
+    static private final Map<String, String> DEFAULT_TAGS_1_1 = new HashMap<>();
 
     static {
         DEFAULT_TAGS_1_0.put("!", "tag:yaml.org,2002:");
