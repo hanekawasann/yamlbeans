@@ -16,12 +16,9 @@
 
 package com.esotericsoftware.yamlbeansx.parser;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -56,13 +53,6 @@ import com.esotericsoftware.yamlbeansx.tokenizer.Token;
 import com.esotericsoftware.yamlbeansx.tokenizer.TokenType;
 import com.esotericsoftware.yamlbeansx.tokenizer.Tokenizer;
 import com.esotericsoftware.yamlbeansx.tokenizer.Tokenizer.TokenizerException;
-import org.aopalliance.intercept.MethodInterceptor;
-import org.aopalliance.intercept.MethodInvocation;
-import org.springframework.aop.framework.ProxyFactory;
-import org.springframework.aop.support.DefaultPointcutAdvisor;
-import org.springframework.aop.support.NameMatchMethodPointcut;
-import org.springframework.aop.support.StaticMethodMatcherPointcut;
-import org.springframework.util.ReflectionUtils;
 
 /**
  * Parses a stream of tokens into events.
@@ -244,7 +234,9 @@ public class Parser {
                     throw new ParserException("Undefined tag handle: " + tagHandle);
                 }
                 tag = tagHandles.get(tagHandle) + tagSuffix;
-            } else { tag = tagSuffix; }
+            } else {
+                tag = tagSuffix;
+            }
             anchors.add(0, anchor);
             tags.add(0, tag);
             return null;
@@ -256,8 +248,11 @@ public class Parser {
         };
         table[P_FLOW_CONTENT] = () -> {
             TokenType type = tokenizer.peekNextTokenType();
-            if (type == FLOW_SEQUENCE_START) { parseStack.add(0, table[P_FLOW_SEQUENCE]); } else if (type ==
-                FLOW_MAPPING_START) { parseStack.add(0, table[P_FLOW_MAPPING]); } else if (type == SCALAR) {
+            if (type == FLOW_SEQUENCE_START) {
+                parseStack.add(0, table[P_FLOW_SEQUENCE]);
+            } else if (type == FLOW_MAPPING_START) {
+                parseStack.add(0, table[P_FLOW_MAPPING]);
+            } else if (type == SCALAR) {
                 parseStack.add(0, table[P_SCALAR]);
             } else {
                 throw new ParserException("Expected a sequence, mapping, or scalar but found: " + type);
@@ -290,10 +285,12 @@ public class Parser {
         };
         table[P_SCALAR] = () -> {
             ScalarToken token = (ScalarToken) tokenizer.getNextToken();
-            boolean[] implicit = null;
+            boolean[] implicit;
             if (token.getPlain() && tags.get(0) == null || "!".equals(tags.get(0))) {
                 implicit = new boolean[] { true, false };
-            } else if (tags.get(0) == null) { implicit = new boolean[] { false, true }; } else {
+            } else if (tags.get(0) == null) {
+                implicit = new boolean[] { false, true };
+            } else {
                 implicit = new boolean[] { false, false };
             }
             return new ScalarEvent(anchors.get(0), tags.get(0), implicit, token.getValue(), token.getStyle());
@@ -345,12 +342,16 @@ public class Parser {
                     parseStack.add(0, table[P_BLOCK_NODE_OR_INDENTLESS_SEQUENCE]);
                     parseStack.add(0, table[P_PROPERTIES]);
                 }
-            } else if (type == KEY) { parseStack.add(0, table[P_EMPTY_SCALAR]); }
+            } else if (type == KEY) {
+                parseStack.add(0, table[P_EMPTY_SCALAR]);
+            }
             return null;
         };
         table[P_BLOCK_NODE_OR_INDENTLESS_SEQUENCE] = () -> {
             TokenType type = tokenizer.peekNextTokenType();
-            if (type == ALIAS) { parseStack.add(0, table[P_ALIAS]); } else if (type == BLOCK_ENTRY) {
+            if (type == ALIAS) {
+                parseStack.add(0, table[P_ALIAS]);
+            } else if (type == BLOCK_ENTRY) {
                 parseStack.add(0, table[P_INDENTLESS_BLOCK_SEQUENCE]);
             } else {
                 parseStack.add(0, table[P_BLOCK_CONTENT]);
@@ -464,7 +465,9 @@ public class Parser {
             TokenType type = tokenizer.peekNextTokenType();
             if (type == VALUE || type == FLOW_ENTRY || type == FLOW_SEQUENCE_END) {
                 parseStack.add(0, table[P_EMPTY_SCALAR]);
-            } else { parseStack.add(0, table[P_FLOW_NODE]); }
+            } else {
+                parseStack.add(0, table[P_FLOW_NODE]);
+            }
             return null;
         };
         table[P_FLOW_INTERNAL_VALUE] = () -> {
@@ -472,13 +475,19 @@ public class Parser {
                 tokenizer.getNextToken();
                 if (tokenizer.peekNextTokenType() == FLOW_ENTRY || tokenizer.peekNextTokenType() == FLOW_SEQUENCE_END) {
                     parseStack.add(0, table[P_EMPTY_SCALAR]);
-                } else { parseStack.add(0, table[P_FLOW_NODE]); }
-            } else { parseStack.add(0, table[P_EMPTY_SCALAR]); }
+                } else {
+                    parseStack.add(0, table[P_FLOW_NODE]);
+                }
+            } else {
+                parseStack.add(0, table[P_EMPTY_SCALAR]);
+            }
             return null;
         };
         table[P_FLOW_INTERNAL_MAPPING_END] = () -> Event.MAPPING_END;
         table[P_FLOW_ENTRY_MARKER] = () -> {
-            if (tokenizer.peekNextTokenType() == FLOW_ENTRY) { tokenizer.getNextToken(); }
+            if (tokenizer.peekNextTokenType() == FLOW_ENTRY) {
+                tokenizer.getNextToken();
+            }
             return null;
         };
         table[P_FLOW_NODE] = () -> {
@@ -504,8 +513,12 @@ public class Parser {
                 tokenizer.getNextToken();
                 if (tokenizer.peekNextTokenType() == FLOW_ENTRY || tokenizer.peekNextTokenType() == FLOW_MAPPING_END) {
                     parseStack.add(0, table[P_EMPTY_SCALAR]);
-                } else { parseStack.add(0, table[P_FLOW_NODE]); }
-            } else { parseStack.add(0, table[P_EMPTY_SCALAR]); }
+                } else {
+                    parseStack.add(0, table[P_FLOW_NODE]);
+                }
+            } else {
+                parseStack.add(0, table[P_EMPTY_SCALAR]);
+            }
             return null;
         };
         table[P_ALIAS] = () -> {

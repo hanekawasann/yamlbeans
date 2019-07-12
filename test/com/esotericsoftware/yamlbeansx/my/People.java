@@ -11,6 +11,7 @@ import lombok.Data;
  */
 @Data
 public class People implements Serializable {
+    //private String emptyString;
     private String name;
     private int age;
     private List<String> address = new ArrayList<>();

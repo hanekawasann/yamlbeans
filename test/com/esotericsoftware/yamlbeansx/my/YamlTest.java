@@ -161,6 +161,7 @@ public class YamlTest {
     public void test_general_obj_config() throws IOException {
         String path = "test/resource/yaml/generalObjConfig.yaml";
         People people = new People();
+        //people.setEmptyString("");
         people.setName("yukms");
         people.setAge(18);
         YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
@@ -172,6 +173,7 @@ public class YamlTest {
         People read = (People) reader.read();
         Assert.assertEquals("yukms", read.getName());
         Assert.assertEquals(18, read.getAge());
+        //Assert.assertEquals("", read.getEmptyString());
     }
 
     @Test
