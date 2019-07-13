@@ -44,6 +44,51 @@ public class YamlTest {
     }
 
     @Test
+    public void test_ListFieldObject_null() throws IOException {
+        String path = "test/resource/yaml/ListFieldObject_null.yaml";
+        ListFieldObject object = new ListFieldObject();
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        writer.write(object);
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path));
+        ListFieldObject read = (ListFieldObject) reader.read();
+        Assert.assertNull(read.getAddress());
+    }
+
+    @Test
+    public void test_ListFieldObject_empty() throws IOException {
+        String path = "test/resource/yaml/ListFieldObject_empty.yaml";
+        ListFieldObject object = new ListFieldObject();
+        object.setAddress(new ArrayList<>());
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        writer.write(object);
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path));
+        ListFieldObject read = (ListFieldObject) reader.read();
+        Assert.assertTrue(read.getAddress().isEmpty());
+    }
+
+    @Test
+    public void test_ListFieldObject() throws IOException {
+        String path = "test/resource/yaml/ListFieldObject.yaml";
+        ListFieldObject object = new ListFieldObject();
+        ArrayList<String> list = new ArrayList<>();
+        list.add("1");
+        object.setAddress(list);
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        writer.write(object);
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path));
+        ListFieldObject read = (ListFieldObject) reader.read();
+        List<String> address = read.getAddress();
+        Assert.assertEquals(1, address.size());
+        Assert.assertEquals("1", address.get(0));
+    }
+
+    @Test
     public void test_array_list() throws IOException {
         String path = "test/resource/yaml/ArrayList.yaml";
         List<String> strings = new ArrayList<>();
@@ -51,7 +96,6 @@ public class YamlTest {
         strings.add("2");
         YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
         writer.write(strings);
-        writer.clearAnchors();
         writer.close();
 
         YamlxReader reader = new YamlxReader(new FileReader(path));
@@ -69,7 +113,6 @@ public class YamlTest {
         strings.add("2");
         YamlxWriter writer = new YamlxWriter(new FileWriter(path));
         writer.write(strings);
-        writer.clearAnchors();
         writer.close();
 
         YamlxReader reader = new YamlxReader(new FileReader(path));
@@ -86,7 +129,6 @@ public class YamlTest {
         strings.add("2");
         YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
         writer.write(strings);
-        writer.clearAnchors();
         writer.close();
 
         YamlxReader reader = new YamlxReader(new FileReader(path));
@@ -105,7 +147,6 @@ public class YamlTest {
         object.setStrings(strings);
         YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
         writer.write(object);
-        writer.clearAnchors();
         writer.close();
 
         YamlxReader reader = new YamlxReader(new FileReader(path));
@@ -119,7 +160,6 @@ public class YamlTest {
         CollectionFieldObject object = new CollectionFieldObject();
         YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
         writer.write(object);
-        writer.clearAnchors();
         writer.close();
 
         YamlxReader reader = new YamlxReader(new FileReader(path));
@@ -135,7 +175,6 @@ public class YamlTest {
         people.setAge(18);
         YamlxWriter writer = new YamlxWriter(new FileWriter(path));
         writer.write(people);
-        writer.clearAnchors();
         writer.close();
 
         YamlxReader reader = new YamlxReader(new FileReader(path));
@@ -167,7 +206,6 @@ public class YamlTest {
         people.setAge(18);
         YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
         writer.write(people);
-        writer.clearAnchors();
         writer.close();
 
         YamlxReader reader = new YamlxReader(new FileReader(path));

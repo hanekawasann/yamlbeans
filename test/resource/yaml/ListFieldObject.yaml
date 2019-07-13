@@ -1,0 +1,8 @@
+--- 
+!com.esotericsoftware.yamlbeansx.object.ListFieldObject {
+   ? "address"
+   : [
+      !java.lang.String "1",
+   ],
+}
+...
