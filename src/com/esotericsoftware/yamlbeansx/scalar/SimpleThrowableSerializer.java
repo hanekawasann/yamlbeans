@@ -5,7 +5,7 @@ import com.esotericsoftware.yamlbeansx.YamlxException;
 /**
  * @author hudingpeng hudingpeng@souche.com 2019/7/13 19:21
  */
-public class ThrowableSerializer implements ScalarSerializer<Throwable> {
+public class SimpleThrowableSerializer implements ScalarSerializer<Throwable> {
     @Override
     public String write(Throwable object) throws YamlxException {
         return object.getClass().getName();
