@@ -58,7 +58,6 @@ public class YamlTest {
         Assert.assertEquals(0, read.length);
     }
 
-    @Ignore
     @Test
     public void test_Exception_config() throws IOException {
         String path = "test/resource/yaml/ExceptionConfig.yaml";
@@ -68,7 +67,7 @@ public class YamlTest {
 
         YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
         Throwable read = (Throwable) reader.read();
-        Assert.assertNull(read);
+        Assert.assertNotNull(read);
     }
 
     @Test
@@ -475,7 +474,7 @@ public class YamlTest {
         Assert.assertEquals("string", read);
     }
 
-    @Test(expected = YamlxException.class)
+    @Test
     public void test_exception() throws IOException {
         String path = "test/resource/yaml/exception.yaml";
         YamlxWriter writer = new YamlxWriter(new FileWriter(path));

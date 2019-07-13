@@ -33,6 +33,7 @@ import com.esotericsoftware.yamlbeansx.scalar.BigDecimalSerializer;
 import com.esotericsoftware.yamlbeansx.scalar.BigIntegerSerializer;
 import com.esotericsoftware.yamlbeansx.scalar.DateSerializer;
 import com.esotericsoftware.yamlbeansx.scalar.ScalarSerializer;
+import com.esotericsoftware.yamlbeansx.scalar.ThrowableSerializer;
 
 /**
  * Stores configuration for reading and writing YAML.
@@ -62,6 +63,7 @@ public class YamlxConfig {
         scalarSerializers.put(Date.class, new DateSerializer());
         scalarSerializers.put(BigDecimal.class, new BigDecimalSerializer());
         scalarSerializers.put(BigInteger.class, new BigIntegerSerializer());
+        scalarSerializers.put(Throwable.class, new ThrowableSerializer());
 
         tagToClass.put("tag:yaml.org,2002:str", String.class);
         tagToClass.put("tag:yaml.org,2002:int", Integer.class);
