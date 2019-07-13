@@ -1,0 +1,22 @@
+--- 
+[
+   !com.esotericsoftware.yamlbeansx.object.Teacher {
+      ? "name"
+      : !java.lang.String "teacher",
+      ? "age"
+      : !java.lang.Integer "18",
+      ? "address"
+      : [],
+   },
+   !com.esotericsoftware.yamlbeansx.object.Student {
+      ? "name"
+      : !java.lang.String "student",
+      ? "age"
+      : !java.lang.Integer "18",
+      ? "address"
+      : [],
+      ? "teacherName"
+      : !java.lang.String "teacher",
+   }
+]
+...

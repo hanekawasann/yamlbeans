@@ -44,9 +44,10 @@ public class YamlTest {
         writeConfig.setExplicitEndDocument(true);
     }
 
+    @Ignore
     @Test
     public void test_String_Array_config() throws IOException {
-        String path = "test/resource/yaml/StringConfig.yaml";
+        String path = "test/resource/yaml/StringArrayConfig.yaml";
         YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
         String[] strings = new String[0];
         writer.write(strings);
@@ -372,7 +373,42 @@ public class YamlTest {
     }
 
     @Test
-    public void test_subclass_obj_config() throws IOException {
+    public void test_Collection_subclass_obj_config() throws IOException {
+        String path = "test/resource/yaml/CollectionSubclassObjConfig.yaml";
+        Teacher teacher = new Teacher();
+        teacher.setName("teacher");
+        teacher.setAge(18);
+        Student student = new Student();
+        student.setName("student");
+        student.setAge(18);
+        student.setTeacherName("teacher");
+        People[] people = new People[] { teacher, student};
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        writer.write(people);
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
+        List<People> read = (List<People>) reader.read();
+        Assert.assertEquals(2, read.size());
+    }
+
+    protected List<People> getSubclassesOfPeople() {
+        Teacher teacher = new Teacher();
+        teacher.setName("teacher");
+        teacher.setAge(18);
+        Student student = new Student();
+        student.setName("student");
+        student.setAge(18);
+        student.setTeacherName("teacher");
+
+        List<People> people = new ArrayList<>();
+        people.add(teacher);
+        people.add(student);
+        return people;
+    }
+
+    @Test
+    public void test_Array_subclass_obj_config() throws IOException {
         String path = "test/resource/yaml/subclassObjConfig.yaml";
         List<People> people = getSubclassesOfPeople();
         YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
@@ -389,21 +425,6 @@ public class YamlTest {
         Assert.assertEquals("student", read_1.getName());
         Assert.assertEquals(18, read_1.getAge());
         Assert.assertEquals("teacher", read_1.getTeacherName());
-    }
-
-    protected List<People> getSubclassesOfPeople() {
-        Teacher teacher = new Teacher();
-        teacher.setName("teacher");
-        teacher.setAge(18);
-        Student student = new Student();
-        student.setName("student");
-        student.setAge(18);
-        student.setTeacherName("teacher");
-
-        List<People> people = new ArrayList<>();
-        people.add(teacher);
-        people.add(student);
-        return people;
     }
 
     @Test

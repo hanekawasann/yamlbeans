@@ -44,6 +44,7 @@ import com.esotericsoftware.yamlbeansx.parser.Parser.ParserException;
 import com.esotericsoftware.yamlbeansx.parser.ScalarEvent;
 import com.esotericsoftware.yamlbeansx.scalar.ScalarSerializer;
 import com.esotericsoftware.yamlbeansx.tokenizer.Tokenizer.TokenizerException;
+import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * Deserializes Java objects from YAML.
