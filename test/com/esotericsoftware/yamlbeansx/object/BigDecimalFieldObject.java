@@ -1,4 +1,4 @@
-package com.esotericsoftware.yamlbeansx.my;
+package com.esotericsoftware.yamlbeansx.object;
 
 import java.math.BigDecimal;
 

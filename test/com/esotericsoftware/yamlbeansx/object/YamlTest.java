@@ -1,4 +1,4 @@
-package com.esotericsoftware.yamlbeansx.my;
+package com.esotericsoftware.yamlbeansx.object;
 
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -56,6 +56,7 @@ public class YamlTest {
 
         YamlxReader reader = new YamlxReader(new FileReader(path));
         List<String> read = (List<String>) reader.read();
+        Assert.assertEquals(2, read.size());
         Assert.assertEquals("1", read.get(0));
         Assert.assertEquals("2", read.get(1));
     }
