@@ -1,6 +1,6 @@
 --- 
 [
-   &1 !com.esotericsoftware.yamlbeansx.my.Teacher {
+   &1 !com.esotericsoftware.yamlbeansx.object.Teacher {
       ? "name"
       : !java.lang.String "teacher",
       ? "age"
@@ -8,6 +8,6 @@
       ? "address"
       : [],
    },
-   *1,
+   *1
 ]
 ...

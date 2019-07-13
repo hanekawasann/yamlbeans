@@ -13,6 +13,7 @@ import com.esotericsoftware.yamlbeansx.YamlxException;
 import com.esotericsoftware.yamlbeansx.YamlxReader;
 import com.esotericsoftware.yamlbeansx.YamlxWriter;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -26,7 +27,7 @@ public class YamlTest {
         //保存默认字段（无法保存null）
         writeConfig.setWriteDefaultValues(true);
         // 缩进
-        writeConfig.setIndentSize(3);
+        //writeConfig.setIndentSize(3);
         // 文件字段顺序与字段定义顺序相同
         writeConfig.setKeepBeanPropertyOrder(true);
         // 格式化输出
@@ -41,6 +42,84 @@ public class YamlTest {
         writeConfig.setExplicitFirstDocument(true);
         // 输出结束标记
         writeConfig.setExplicitEndDocument(true);
+    }
+
+    @Test
+    public void test_String_Array_config() throws IOException {
+        String path = "test/resource/yaml/StringConfig.yaml";
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        String[] strings = new String[0];
+        writer.write(strings);
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
+        String[] read = (String[]) reader.read();
+        Assert.assertEquals(0, read.length);
+    }
+
+    @Ignore
+    @Test
+    public void test_Exception_config() throws IOException {
+        String path = "test/resource/yaml/ExceptionConfig.yaml";
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        writer.write(new Throwable());
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
+        Throwable read = (Throwable) reader.read();
+        Assert.assertNull(read);
+    }
+
+    @Test
+    public void test_BigDecimal() throws IOException {
+        String path = "test/resource/yaml/BigDecimal.yaml";
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path));
+        writer.write(new BigDecimal(123));
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path));
+        BigDecimal read = reader.read(BigDecimal.class);
+        Assert.assertEquals(123, read.intValue());
+    }
+
+    @Test
+    public void test_BigDecimal_config() throws IOException {
+        String path = "test/resource/yaml/BigDecimalConfig.yaml";
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        writer.write(new BigDecimal(123));
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
+        BigDecimal read = reader.read(BigDecimal.class);
+        Assert.assertEquals(123, read.intValue());
+    }
+
+    @Test
+    public void test_BigDecimalFieldObject() throws IOException {
+        String path = "test/resource/yaml/BigDecimalFieldObject.yaml";
+        BigDecimalFieldObject object = new BigDecimalFieldObject();
+        object.setDecimal(new BigDecimal(123));
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path));
+        writer.write(object);
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path));
+        BigDecimalFieldObject read = reader.read(BigDecimalFieldObject.class);
+        Assert.assertEquals(123, read.getDecimal().intValue());
+    }
+
+    @Test
+    public void test_BigDecimalFieldObject_config() throws IOException {
+        String path = "test/resource/yaml/BigDecimalFieldObjectConfig.yaml";
+        BigDecimalFieldObject object = new BigDecimalFieldObject();
+        object.setDecimal(new BigDecimal(123));
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        writer.write(object);
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
+        BigDecimalFieldObject read = reader.read(BigDecimalFieldObject.class);
+        Assert.assertEquals(123, read.getDecimal().intValue());
     }
 
     @Test
@@ -81,11 +160,11 @@ public class YamlTest {
         writer.write(object);
         writer.close();
 
-        //YamlxReader reader = new YamlxReader(new FileReader(path));
-        //ListFieldObject read = (ListFieldObject) reader.read();
-        //List<String> address = read.getAddress();
-        //Assert.assertEquals(1, address.size());
-        //Assert.assertEquals("1", address.get(0));
+        YamlxReader reader = new YamlxReader(new FileReader(path));
+        ListFieldObject read = (ListFieldObject) reader.read();
+        List<String> address = read.getAddress();
+        Assert.assertEquals(1, address.size());
+        Assert.assertEquals("1", address.get(0));
     }
 
     @Test
@@ -168,7 +247,10 @@ public class YamlTest {
 
         YamlxReader reader = new YamlxReader(new FileReader(path));
         CollectionFieldObject read = reader.read(CollectionFieldObject.class);
-        Assert.assertTrue(read.getStrings().isEmpty());
+        List<String> list = read.getStrings();
+        Assert.assertEquals(2, list.size());
+        Assert.assertEquals("1", list.get(0));
+        Assert.assertEquals("2", list.get(1));
     }
 
     @Test
@@ -242,20 +324,6 @@ public class YamlTest {
         NullFieldObject read = reader.read(NullFieldObject.class);
         //Assert.assertNull(read.getName());
         Assert.assertNull(read.getObject());
-    }
-
-    @Test
-    public void test_BigDecimalFieldObject() throws IOException {
-        String path = "test/resource/yaml/BigDecimalFieldObject.yaml";
-        BigDecimalFieldObject object = new BigDecimalFieldObject();
-        object.setDecimal(new BigDecimal(123));
-        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
-        writer.write(object);
-        writer.close();
-
-        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
-        BigDecimalFieldObject read = reader.read(BigDecimalFieldObject.class);
-        Assert.assertNull(read.getDecimal());
     }
 
     @Test

@@ -1,6 +1,6 @@
 --- 
 [
-   !com.esotericsoftware.yamlbeansx.my.Teacher {
+   !com.esotericsoftware.yamlbeansx.object.Teacher {
       ? "name"
       : !java.lang.String "teacher",
       ? "age"
@@ -8,7 +8,7 @@
       ? "address"
       : [],
    },
-   !com.esotericsoftware.yamlbeansx.my.Student {
+   !com.esotericsoftware.yamlbeansx.object.Student {
       ? "name"
       : !java.lang.String "student",
       ? "age"
@@ -17,6 +17,6 @@
       : [],
       ? "teacherName"
       : !java.lang.String "teacher",
-   },
+   }
 ]
 ...

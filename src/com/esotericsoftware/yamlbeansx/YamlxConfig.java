@@ -17,6 +17,8 @@
 package com.esotericsoftware.yamlbeansx;
 
 import java.lang.reflect.Constructor;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,6 +29,8 @@ import java.util.Map;
 
 import com.esotericsoftware.yamlbeansx.Beans.Property;
 import com.esotericsoftware.yamlbeansx.emitter.EmitterConfigx;
+import com.esotericsoftware.yamlbeansx.scalar.BigDecimalSerializer;
+import com.esotericsoftware.yamlbeansx.scalar.BigIntegerSerializer;
 import com.esotericsoftware.yamlbeansx.scalar.DateSerializer;
 import com.esotericsoftware.yamlbeansx.scalar.ScalarSerializer;
 
@@ -54,8 +58,10 @@ public class YamlxConfig {
     String tagSuffix;
 
     public YamlxConfig() {
-        // TODO: 2019/7/10 添加解析类型
+        // 添加解析类型
         scalarSerializers.put(Date.class, new DateSerializer());
+        scalarSerializers.put(BigDecimal.class, new BigDecimalSerializer());
+        scalarSerializers.put(BigInteger.class, new BigIntegerSerializer());
 
         tagToClass.put("tag:yaml.org,2002:str", String.class);
         tagToClass.put("tag:yaml.org,2002:int", Integer.class);

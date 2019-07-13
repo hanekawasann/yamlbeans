@@ -1,9 +1,9 @@
 --- 
-!com.esotericsoftware.yamlbeansx.my.CollectionFieldObject {
+!com.esotericsoftware.yamlbeansx.object.CollectionFieldObject {
    ? "strings"
    : [
       !java.lang.String "1",
-      !java.lang.String "2",
+      !java.lang.String "2"
    ],
 }
 ...

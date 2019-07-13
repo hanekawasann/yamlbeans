@@ -1,7 +1,7 @@
-- !com.esotericsoftware.yamlbeansx.my.Teacher
-   name: teacher
-   age: 18
-- !com.esotericsoftware.yamlbeansx.my.Student
-   name: student
-   age: 18
-   teacherName: teacher
+- !com.esotericsoftware.yamlbeansx.object.Teacher
+  name: teacher
+  age: 18
+- !com.esotericsoftware.yamlbeansx.object.Student
+  name: student
+  age: 18
+  teacherName: teacher

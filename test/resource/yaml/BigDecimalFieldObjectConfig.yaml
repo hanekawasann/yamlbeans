@@ -1,0 +1,6 @@
+--- 
+!com.esotericsoftware.yamlbeansx.object.BigDecimalFieldObject {
+   ? "decimal"
+   : !java.math.BigDecimal "123",
+}
+...
