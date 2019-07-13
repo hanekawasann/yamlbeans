@@ -219,7 +219,8 @@ public class Emitter {
                 indent = indents.remove(0);
                 flowLevel--;
                 if (config.canonical) {
-                    writer.writeIndicator(",", false, false, false);
+                    // 在结束时不应该放逗号
+                    //writer.writeIndicator(",", false, false, false);
                     writer.writeIndent(indent);
                 }
                 writer.writeIndicator("]", false, false, false);

@@ -255,7 +255,7 @@ public class Parser {
                 parseStack.add(0, table[P_FLOW_MAPPING]);
             } else if (type == SCALAR) {
                 parseStack.add(0, table[P_SCALAR]);
-            } else if (type == KEY || type == FLOW_MAPPING_END) {
+            } else if (type == KEY || type == FLOW_MAPPING_END/* || type == FLOW_SEQUENCE_END*/) {
                 // 在属性值为null的时候也能打印出类型，但是解析报错
                 parseStack.add(0, table[P_EMPTY_SCALAR]);
             } else {

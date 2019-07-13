@@ -502,7 +502,7 @@ public class YamlxReader {
             }
             case SCALAR:
                 // Interpret an empty scalar as null.
-                if (((ScalarEvent) event).value.length() == 0) {
+                if (((ScalarEvent) event).value == null || ((ScalarEvent) event).value.length() == 0) {
                     event = parser.getNextEvent();
                     return null;
                 }

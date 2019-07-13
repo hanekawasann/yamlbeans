@@ -63,8 +63,8 @@ class EmitterWriter {
 
     public EmitterWriter(Writer stream) {
         // TODO: 2019/7/11 aop
-        //this.writer = (Writer) invoker(stream, new LogMethodInterceptor());
-        this.writer = stream;
+        this.writer = (Writer) invoker(stream, new LogMethodInterceptor());
+        //this.writer = stream;
     }
 
     public static Object invoker(Object mockObj, MethodInterceptor interceptor) {

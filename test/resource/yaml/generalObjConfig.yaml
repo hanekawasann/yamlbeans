@@ -1,5 +1,5 @@
 --- 
-!com.esotericsoftware.yamlbeansx.my.People {
+!com.esotericsoftware.yamlbeansx.object.People {
    ? "name"
    : !java.lang.String "yukms",
    ? "age"
