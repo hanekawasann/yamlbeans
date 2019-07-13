@@ -182,6 +182,7 @@ public class Parser {
             return explicit ? Event.DOCUMENT_END_TRUE : Event.DOCUMENT_END_FALSE;
         };
         table[P_BLOCK_NODE] = () -> {
+            // 这里之后文件就解析结束
             TokenType type = tokenizer.peekNextTokenType();
             if (type == DIRECTIVE || type == DOCUMENT_START || type == DOCUMENT_END || type == STREAM_END) {
                 parseStack.add(0, table[P_EMPTY_SCALAR]);
@@ -254,6 +255,9 @@ public class Parser {
                 parseStack.add(0, table[P_FLOW_MAPPING]);
             } else if (type == SCALAR) {
                 parseStack.add(0, table[P_SCALAR]);
+            } else if (type == KEY || type == FLOW_MAPPING_END) {
+                // 在属性值为null的时候也能打印出类型，但是解析报错
+                parseStack.add(0, table[P_EMPTY_SCALAR]);
             } else {
                 throw new ParserException("Expected a sequence, mapping, or scalar but found: " + type);
             }

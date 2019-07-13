@@ -149,7 +149,7 @@ public class YamlxWriter {
             return;
         }
         if (object == null) {
-            // TODO: 2019/7/10 在属性值为null的时候也能打印出类型
+            // 在属性值为null的时候也能打印出类型
             //String tag = null;
             String tag = fieldClass == null ? null : fieldClass.getName();
             emitter.emit(new ScalarEvent(null, tag, new boolean[] { true, true }, null, (char) 0));
