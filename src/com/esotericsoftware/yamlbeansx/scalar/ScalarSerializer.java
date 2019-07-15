@@ -20,7 +20,7 @@ import com.esotericsoftware.yamlbeansx.YamlxException;
 
 /** @author <a href="mailto:misc@n4te.com">Nathan Sweet</a> */
 public interface ScalarSerializer<T> {
-    abstract public String write(T object) throws YamlxException;
+    String write(T object) throws YamlxException;
 
-    abstract public T read(String value) throws YamlxException;
+    T read(String value) throws YamlxException;
 }

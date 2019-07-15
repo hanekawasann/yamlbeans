@@ -1,0 +1,9 @@
+--- 
+!com.esotericsoftware.yamlbeansx.object.ArrayFieldObject {
+   ? "array"
+   : [
+      !java.lang.String "1",
+      !java.lang.String "2"
+   ],
+}
+...

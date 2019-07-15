@@ -44,6 +44,22 @@ public class YamlTest {
         writeConfig.setExplicitEndDocument(true);
     }
 
+    @Test
+    public void test_ArrayFieldObject() throws IOException {
+        String path = "test/resource/yaml/ArrayFieldObject.yaml";
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        ArrayFieldObject object = new ArrayFieldObject();
+        //object.setArray(null);
+        //object.setArray(new String[0]);
+        object.setArray(new String[] { "1", "2" });
+        writer.write(object);
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
+        ArrayFieldObject read = (ArrayFieldObject) reader.read();
+        Assert.assertEquals("1", read.getArray()[0]);
+    }
+
     @Ignore
     @Test
     public void test_String_Array_config() throws IOException {
@@ -381,7 +397,7 @@ public class YamlTest {
         student.setName("student");
         student.setAge(18);
         student.setTeacherName("teacher");
-        People[] people = new People[] { teacher, student};
+        People[] people = new People[] { teacher, student };
         YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
         writer.write(people);
         writer.close();

@@ -43,13 +43,13 @@ import com.esotericsoftware.yamlbeansx.scalar.SimpleThrowableSerializer;
 public class YamlxConfig {
     /** Configuration for writing YAML. */
     public final WriteConfig writeConfig = new WriteConfig();
-
     /** Configuration for reading YAML. */
     public final ReadConfig readConfig = new ReadConfig();
+    /** 自定义解析 */
+    public final Map<Class, ScalarSerializer> scalarSerializers = new IdentityHashMap<>();
 
     final Map<String, String> classNameToTag = new HashMap<>();
     final Map<String, Class> tagToClass = new HashMap<>();
-    final Map<Class, ScalarSerializer> scalarSerializers = new IdentityHashMap<>();
     final Map<Property, Class> propertyToElementType = new HashMap<>();
     final Map<Property, Class> propertyToDefaultType = new HashMap<>();
     boolean beanProperties = true;
