@@ -46,7 +46,7 @@ public class YamlxConfig {
     /** Configuration for reading YAML. */
     public final ReadConfig readConfig = new ReadConfig();
     /** 自定义解析 */
-    private final Map<Class, ScalarSerializer> scalarSerializers = new IdentityHashMap<>();
+    final Map<Class, ScalarSerializer> scalarSerializers = new IdentityHashMap<>();
 
     final Map<String, String> classNameToTag = new HashMap<>();
     final Map<String, Class> tagToClass = new HashMap<>();
