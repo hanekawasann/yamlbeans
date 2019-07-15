@@ -16,7 +16,7 @@
     <version>1.14</version>
 
     <description>Java object graphs, to and from YAML</description>
-    <url>https://github.com/EsotericSoftware/yamlbeans</url>
+    <url>https://github.com/hanekawasann/yamlbeans</url>
 
     <licenses>
         <license>
