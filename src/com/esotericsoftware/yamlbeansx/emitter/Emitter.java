@@ -573,7 +573,6 @@ public class Emitter {
         }
         boolean split = !simpleKeyContext;
         String scalar = analysis.scalar;
-        // TODO: 2019/7/10 处理为空时打印什么
         if (scalar != null) {
             if (style == '"') {
                 writer.writeDoubleQuoted(scalar, split, indent, config.wrapColumn, config.escapeUnicode);
