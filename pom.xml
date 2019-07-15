@@ -25,12 +25,6 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-    <scm>
-        <url>scm:git:git@github.com:esotericsoftware/yamlbeans.git</url>
-        <connection>scm:git:git@github.com:esotericsoftware/yamlbeans.git</connection>
-        <developerConnection>scm:git:git@github.com:esotericsoftware/yamlbeans.git</developerConnection>
-        <tag>HEAD</tag>
-    </scm>
 
     <dependencies>
         <dependency>
