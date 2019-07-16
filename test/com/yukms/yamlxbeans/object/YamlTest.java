@@ -100,18 +100,6 @@ public class YamlTest {
     }
 
     @Test
-    public void test_Exception_config() throws IOException {
-        String path = "test/resource/yaml/ExceptionConfig.yaml";
-        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
-        writer.write(new Throwable());
-        writer.close();
-
-        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
-        Throwable read = (Throwable) reader.read();
-        Assert.assertNotNull(read);
-    }
-
-    @Test
     public void test_BigDecimal() throws IOException {
         String path = "test/resource/yaml/BigDecimal.yaml";
         YamlxWriter writer = new YamlxWriter(new FileWriter(path));
@@ -521,6 +509,50 @@ public class YamlTest {
         YamlxWriter writer = new YamlxWriter(new FileWriter(path));
         writer.write(new RuntimeException("exception"));
         writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path));
+        RuntimeException read = (RuntimeException) reader.read();
+        Assert.assertNotNull(read);
+    }
+
+    @Test
+    public void test_Exception_config() throws IOException {
+        String path = "test/resource/yaml/ExceptionConfig.yaml";
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        writer.write(new Throwable("123"));
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
+        Throwable read = (Throwable) reader.read();
+        Assert.assertNotNull(read);
+        Assert.assertEquals("123", read.getMessage());
+    }
+
+    @Test
+    public void test_ThrowableFieldObject_config() throws IOException {
+        String path = "test/resource/yaml/ThrowableFieldObjectConfig.yaml";
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        ThrowableFieldObject object = new ThrowableFieldObject();
+        object.setThrowable(new Throwable());
+        writer.write(object);
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
+        ThrowableFieldObject read = (ThrowableFieldObject) reader.read();
+        Assert.assertNotNull(read.getThrowable());
+    }
+
+    @Test
+    public void test_NullThrowableFieldObject_config() throws IOException {
+        String path = "test/resource/yaml/NullThrowableFieldObjectConfig.yaml";
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        ThrowableFieldObject object = new ThrowableFieldObject();
+        writer.write(object);
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
+        ThrowableFieldObject read = (ThrowableFieldObject) reader.read();
+        Assert.assertNull(read.getThrowable());
     }
 
     @Test

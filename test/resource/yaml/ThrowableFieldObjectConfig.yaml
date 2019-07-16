@@ -1,0 +1,6 @@
+--- 
+!com.yukms.yamlxbeans.object.ThrowableFieldObject {
+   ? "throwable"
+   : !java.lang.Throwable "{\"className\":\"java.lang.Throwable\"}",
+}
+...
