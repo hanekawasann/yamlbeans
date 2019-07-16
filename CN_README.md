@@ -1,9 +1,3 @@
-## 扩展
-
-- 保存空对象，并且保存空对象时也能输出类型
-- 保存集合输出错误导致解析失败
-- 支持BigInteger、BigInteger、和简单Throwable
-
 ## YamlBeans
 
 若需更多支持，请移步[YamlBeans讨论组](http://groups.google.com/group/yamlbeans-users)

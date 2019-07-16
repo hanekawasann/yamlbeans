@@ -11,7 +11,7 @@
     </parent>
 
     <name>YamlBeans</name>
-    <groupId>com.esotericsoftware.yamlbeansx</groupId>
+    <groupId>com.yukms</groupId>
     <artifactId>yamlbeansx</artifactId>
     <version>1.14</version>
 
@@ -176,41 +176,6 @@
                     <value>true</value>
                 </property>
             </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.nuiton</groupId>
-                        <artifactId>helper-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>get-pgp-passphrase</id>
-                                <goals>
-                                    <goal>share-server-secret</goal>
-                                </goals>
-                                <phase>verify</phase>
-                                <configuration>
-                                    <serverId>${gpg.serverId}</serverId>
-                                    <usernameOut>gpg.keyname</usernameOut>
-                                    <passwordOut>gpg.passphrase</passwordOut>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
     </profiles>
-
 </project>
