@@ -1,5 +1,5 @@
 --- 
-!com.esotericsoftware.yamlbeansx.object.ArrayFieldObject {
+!com.yukms.yamlxbeans.object.ArrayFieldObject {
    ? "array"
    : [
       !java.lang.String "1",

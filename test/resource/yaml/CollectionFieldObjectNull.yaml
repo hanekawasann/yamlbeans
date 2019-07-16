@@ -1,5 +1,5 @@
 --- 
-!com.esotericsoftware.yamlbeansx.object.CollectionFieldObject {
+!com.yukms.yamlxbeans.object.CollectionFieldObject {
    ? "strings"
    : !java.util.List,
 }

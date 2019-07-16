@@ -1,6 +1,6 @@
 --- 
 [
-   &1 !com.esotericsoftware.yamlbeansx.object.Teacher {
+   &1 !com.yukms.yamlxbeans.object.Teacher {
       ? "name"
       : !java.lang.String "teacher",
       ? "age"

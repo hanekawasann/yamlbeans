@@ -44,6 +44,32 @@ public class YamlTest {
     }
 
     @Test
+    public void test_Class() throws IOException {
+        String path = "test/resource/yaml/Class.yaml";
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        writer.write(this.getClass());
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
+        Class read = (Class) reader.read();
+        Assert.assertEquals(this.getClass(), read);
+    }
+
+    @Test
+    public void test_ClassFieldObject() throws IOException {
+        String path = "test/resource/yaml/ClassFieldObject.yaml";
+        YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);
+        ClassFieldObject object = new ClassFieldObject();
+        object.setClazz(this.getClass());
+        writer.write(object);
+        writer.close();
+
+        YamlxReader reader = new YamlxReader(new FileReader(path), CONFIG);
+        ClassFieldObject read = (ClassFieldObject) reader.read();
+        Assert.assertEquals(this.getClass(), read.getClazz());
+    }
+
+    @Test
     public void test_ArrayFieldObject() throws IOException {
         String path = "test/resource/yaml/ArrayFieldObject.yaml";
         YamlxWriter writer = new YamlxWriter(new FileWriter(path), CONFIG);

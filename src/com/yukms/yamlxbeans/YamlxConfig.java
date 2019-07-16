@@ -30,6 +30,7 @@ import java.util.Map;
 import com.yukms.yamlxbeans.emitter.EmitterConfigx;
 import com.yukms.yamlxbeans.scalar.BigDecimalSerializer;
 import com.yukms.yamlxbeans.scalar.BigIntegerSerializer;
+import com.yukms.yamlxbeans.scalar.ClassSerializer;
 import com.yukms.yamlxbeans.scalar.DateSerializer;
 import com.yukms.yamlxbeans.scalar.ScalarSerializer;
 import com.yukms.yamlxbeans.scalar.SimpleThrowableSerializer;
@@ -62,6 +63,7 @@ public class YamlxConfig {
         scalarSerializers.put(Date.class, new DateSerializer());
         scalarSerializers.put(BigDecimal.class, new BigDecimalSerializer());
         scalarSerializers.put(BigInteger.class, new BigIntegerSerializer());
+        scalarSerializers.put(Class.class, new ClassSerializer());
         scalarSerializers.put(Throwable.class, new SimpleThrowableSerializer());
 
         tagToClass.put("tag:yaml.org,2002:str", String.class);

@@ -1,5 +1,5 @@
 --- 
-!com.esotericsoftware.yamlbeansx.object.NullFieldObject {
+!com.yukms.yamlxbeans.object.NullFieldObject {
    ? "name"
    : !java.lang.String,
    ? "object"

@@ -1,0 +1,6 @@
+--- 
+!com.yukms.yamlxbeans.object.ClassFieldObject {
+   ? "clazz"
+   : !java.lang.Class "com.yukms.yamlxbeans.object.YamlTest",
+}
+...
