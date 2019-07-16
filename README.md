@@ -2,7 +2,7 @@
 
 - 保存空对象，并且保存空对象时也能输出类型
 - 保存集合输出错误导致解析失败
-- 支持BigInteger、BigInteger、和简单Throwable
+- 支持BigInteger、BigInteger、Class和简单Throwable
 
 ## YamlBeans
 
